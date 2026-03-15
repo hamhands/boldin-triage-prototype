@@ -1089,58 +1089,257 @@ body {
 }
 
 /* ============================================
-   DASHBOARD SCREEN
+   PLANNER SHELL (header + sidebar + content)
    ============================================ */
-.dashboard-layout {
-  max-width: 960px;
-  width: 100%;
-}
-.dashboard-header {
-  margin-bottom: 24px;
-}
-.dashboard-header h1 {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--primary-800);
-  margin-bottom: 4px;
-}
-.dashboard-header p {
-  font-size: 14px;
-  color: var(--neutral-500);
-}
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-@media (min-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
+.planner-shell {
+  display: flex;
+  min-height: calc(100vh - 44px);
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
 }
 
-.dashboard-card {
+/* Top header bar */
+.planner-topbar {
+  position: fixed;
+  top: 44px; /* below demo bar */
+  left: 0; right: 0;
+  z-index: 100;
+  height: 52px;
   background: var(--white);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--neutral-100);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
 }
-.dashboard-card h3 {
+.planner-topbar-hamburger {
+  width: 36px; height: 36px;
+  border: none; background: none;
+  font-size: 18px; cursor: pointer;
+  color: var(--neutral-700);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+}
+.planner-topbar-hamburger:hover { background: var(--neutral-50); }
+.planner-topbar-logo {
+  font-size: 18px; font-weight: 700;
+  color: var(--primary-800);
+  letter-spacing: -0.3px;
+}
+.planner-topbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.planner-topbar-scenario {
+  padding: 6px 14px;
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--neutral-700);
+  background: var(--white);
+  cursor: default;
+}
+.planner-topbar-right {
+  display: flex; align-items: center; gap: 12px;
+}
+.planner-topbar-link {
+  font-size: 13px; color: var(--neutral-500);
+  text-decoration: none; cursor: pointer;
+}
+.planner-topbar-link:hover { color: var(--neutral-900); }
+.planner-topbar-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--primary-100);
+  color: var(--primary-800);
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Sidebar */
+.planner-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--neutral-50);
+  border-right: 1px solid var(--neutral-100);
+  padding: 68px 0 20px; /* 52px topbar + 16px spacing */
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 44px;
+  left: 0;
+  bottom: 0;
+  z-index: 90;
+  transition: transform 300ms ease;
+}
+.planner-sidebar-nav {
+  flex: 1;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.planner-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--neutral-500);
-  margin-bottom: 16px;
+  color: var(--neutral-700);
+  cursor: pointer;
+  transition: all 150ms ease;
+  border: none; background: none;
+  text-align: left; width: 100%;
+  font-family: inherit;
 }
-.dashboard-card .gauge-wrapper {
-  margin: 0 auto 8px;
+.planner-nav-item:hover { background: var(--neutral-100); }
+.planner-nav-item.active {
+  background: var(--primary-50);
+  color: var(--primary-800);
+  font-weight: 600;
 }
-.dashboard-accuracy-center {
+.planner-nav-icon {
+  width: 20px; text-align: center;
+  font-size: 14px; opacity: 0.7;
+}
+.planner-nav-item.active .planner-nav-icon { opacity: 1; }
+.planner-nav-badge {
+  margin-left: auto;
+  font-size: 11px; font-weight: 600;
+  background: var(--tertiary-400);
+  color: var(--white);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.planner-nav-divider {
+  height: 1px;
+  background: var(--neutral-100);
+  margin: 8px 12px;
+}
+.planner-sidebar-upgrade {
+  margin: 0 12px;
+  padding: 16px;
+  background: var(--tertiary-50);
+  border-radius: var(--radius-md);
   text-align: center;
 }
+.planner-sidebar-upgrade p {
+  font-size: 12px;
+  color: var(--neutral-700);
+  margin-bottom: 8px;
+}
 
-.dashboard-todo-mini {
+/* Content area */
+.planner-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 72px 32px 32px; /* topbar offset */
+  min-height: calc(100vh - 44px);
+  background: var(--neutral-50);
+}
+.planner-content-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Dashboard heading */
+.dash-welcome {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary-800);
+  margin-bottom: 20px;
+}
+
+/* Dashboard two-column grid */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Dashboard tiles */
+.dash-tile {
+  background: var(--white);
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.dash-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dash-tile-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+.dash-tile-action {
+  font-size: 16px;
+  color: var(--neutral-300);
+  cursor: pointer;
+  border: none; background: none;
+}
+.dash-tile-action:hover { color: var(--neutral-700); }
+
+/* Net worth tile */
+.dash-networth-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 8px;
+}
+.dash-sparkline { margin-bottom: 8px; }
+.dash-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.dash-change.positive {
+  background: var(--secondary-50);
+  color: var(--secondary-600);
+}
+.dash-change.negative {
+  background: #fef2f2;
+  color: var(--feedback-negative);
+}
+
+/* Success tile */
+.dash-success-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.dash-success-pct {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--primary-800);
+  line-height: 1;
+}
+.dash-success-ring {
+  position: relative;
+  width: 56px; height: 56px;
+  flex-shrink: 0;
+}
+.dash-success-text {
+  font-size: 13px;
+  color: var(--neutral-500);
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* Coach tile */
+.dash-coach-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1148,67 +1347,177 @@ body {
   border-bottom: 1px solid var(--neutral-100);
   font-size: 14px;
 }
-.dashboard-todo-mini:last-child { border-bottom: none; }
-.dashboard-todo-mini .mini-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.dash-coach-item:last-of-type { border-bottom: none; }
+.dash-coach-bolt {
+  color: var(--tertiary-400);
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
 }
-.dashboard-todo-mini .mini-dot.free { background: var(--secondary-600); }
-.dashboard-todo-mini .mini-dot.plus { background: var(--tertiary-400); }
-.dashboard-todo-mini .mini-title {
+.dash-coach-title {
   flex: 1;
   color: var(--neutral-900);
 }
-.dashboard-todo-mini .mini-time {
+.dash-coach-accuracy {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--neutral-100);
+}
+.dash-coach-accuracy .gauge-wrapper {
+  width: 100px; height: 65px;
+  margin: 0;
+}
+.dash-coach-see-all {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--primary-600);
+  cursor: pointer;
+  border: none; background: none;
+  font-family: inherit;
+}
+.dash-coach-see-all:hover { color: var(--primary-800); }
+
+/* Projected net worth tile */
+.dash-proj-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+.dash-proj-stat-label {
   font-size: 12px;
   color: var(--neutral-500);
 }
-
-.dashboard-rerun {
-  background: var(--sand);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  box-shadow: var(--shadow-sm);
-  text-align: center;
-}
-.dashboard-rerun h3 {
+.dash-proj-stat-value {
   font-size: 18px;
   font-weight: 700;
   color: var(--primary-800);
-  margin-bottom: 6px;
-  text-transform: none;
-  letter-spacing: 0;
 }
-.dashboard-rerun p {
+
+/* Insight tile */
+.dash-insight {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.dash-insight-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.dash-insight-text {
   font-size: 14px;
-  color: var(--neutral-500);
-  margin-bottom: 16px;
+  color: var(--neutral-700);
   line-height: 1.5;
 }
-
-.dashboard-empty {
-  text-align: center;
-  padding: 24px;
-  color: var(--neutral-500);
-  font-size: 14px;
-}
-.dashboard-empty-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+.dash-insight-text strong {
+  color: var(--primary-800);
 }
 
-.dashboard-simulated-label {
-  display: inline-block;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+/* Cash flow tile */
+.dash-cashflow-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+.dash-cashflow-status.good {
+  background: var(--secondary-50);
+  color: var(--secondary-600);
+}
+.dash-cashflow-status.warn {
+  background: #fef8e7;
+  color: #b8860b;
+}
+.dash-cashflow-metrics {
+  display: flex;
+  gap: 24px;
+}
+.dash-cashflow-metric {
+  flex: 1;
+}
+.dash-cashflow-metric-label {
+  font-size: 12px;
   color: var(--neutral-500);
-  background: var(--neutral-100);
-  padding: 3px 8px;
+  margin-bottom: 2px;
+}
+.dash-cashflow-metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-800);
+}
+.dash-cashflow-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  height: 8px;
   border-radius: 4px;
-  margin-bottom: 12px;
+  overflow: hidden;
+}
+.dash-cashflow-bar-income {
+  background: var(--secondary-600);
+  border-radius: 4px;
+}
+.dash-cashflow-bar-expense {
+  background: var(--tertiary-400);
+  border-radius: 4px;
+}
+
+/* Life changed banner */
+.dash-rerun {
+  background: var(--sand);
+  border: 1px solid var(--neutral-100);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+.dash-rerun-text { flex: 1; }
+.dash-rerun-text h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary-800);
+  margin-bottom: 2px;
+}
+.dash-rerun-text p {
+  font-size: 13px;
+  color: var(--neutral-500);
+}
+
+/* Mobile sidebar */
+.planner-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 89;
+}
+.planner-sidebar-overlay.active { display: block; }
+
+@media (max-width: 900px) {
+  .planner-sidebar {
+    transform: translateX(-100%);
+  }
+  .planner-sidebar.open {
+    transform: translateX(0);
+  }
+  .planner-content {
+    margin-left: 0;
+    padding: 72px 16px 24px;
+  }
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+  .planner-topbar-center { display: none; }
 }
 
 /* ============================================
@@ -1224,7 +1533,6 @@ body {
   .preview-footer { padding: 12px 20px; }
   .preview-why-box { margin: 16px 20px; }
   .onboarding-card h1 { font-size: 22px; }
-  .dashboard-rerun { padding: 20px; }
 }
 </style>
 </head>
@@ -1442,7 +1750,7 @@ function getQuestions(archetype) {
     questions.push({
       id: 'family',
       label: `Question ${questions.length + 1}`,
-      text: 'Beyond you and ' + a.spouseName + ', who else are you planning for?',
+      text: a.hasSpouse ? 'Beyond you and your spouse, who else are you planning for?' : 'Who else are you planning for?',
       type: 'multi',
       options: [
         { value: 'children', text: 'Children still at home' },
@@ -1844,7 +2152,7 @@ function renderOnboardingExit() {
         <div class="confirm-summary">
           <h3>Your profile</h3>
           <div class="confirm-items">
-            <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' ('+a.spouseName+': '+a.spouseAge+')' : ''}</span></div>
+            <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' (spouse: '+a.spouseAge+')' : ''}</span></div>
             <div class="confirm-item"><span class="ci-icon">📅</span><span class="ci-label">Timeline</span><span class="ci-value">${timelineLabel}</span></div>
             <div class="confirm-item"><span class="ci-icon">🏠</span><span class="ci-label">Housing</span><span class="ci-value">${housingLabel}</span></div>
             <div class="confirm-item"><span class="ci-icon">💰</span><span class="ci-label">Saved</span><span class="ci-value">${savingsLabel}</span></div>
@@ -1905,14 +2213,14 @@ function renderTriage() {
       <p class="question-subtext" style="margin-bottom:20px">Here's what we know from your profile. Confirm this looks right, then we'll ask a few more questions.</p>
       <div class="confirm-summary">
         <div class="confirm-items">
-          <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' ('+a.spouseName+': '+a.spouseAge+')' : ''}</span></div>
+          <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' (spouse: '+a.spouseAge+')' : ''}</span></div>
           <div class="confirm-item"><span class="ci-icon">📅</span><span class="ci-label">Timeline</span><span class="ci-value">${timelineLabel}</span></div>
           <div class="confirm-item"><span class="ci-icon">🏠</span><span class="ci-label">Housing</span><span class="ci-value">${housingLabel}</span></div>
           <div class="confirm-item"><span class="ci-icon">💰</span><span class="ci-label">Saved</span><span class="ci-value">${savingsLabel}</span></div>
           <div class="confirm-item"><span class="ci-icon">💼</span><span class="ci-label">Income</span><span class="ci-value">${a.workIncome > 0 ? '$'+a.workIncome.toLocaleString()+'/yr' : 'Retired'}</span></div>
           <div class="confirm-item"><span class="ci-icon">🏥</span><span class="ci-label">SS Est.</span><span class="ci-value">$${a.ssEstimate.toLocaleString()}/mo</span></div>
           ${a.hasPension ? '<div class="confirm-item"><span class="ci-icon">📋</span><span class="ci-label">Pension</span><span class="ci-value">Yes</span></div>' : ''}
-          ${a.hasSpouse ? '<div class="confirm-item"><span class="ci-icon">👫</span><span class="ci-label">Spouse</span><span class="ci-value">'+a.spouseName+'</span></div>' : ''}
+          ${a.hasSpouse ? '<div class="confirm-item"><span class="ci-icon">👫</span><span class="ci-label">Spouse</span><span class="ci-value">Age '+a.spouseAge+'</span></div>' : ''}
         </div>
       </div>
     </div>
@@ -2047,7 +2355,7 @@ function generateInsight(archetype, answers) {
         icon: '📈',
         title: 'Social Security Timing Matters',
         stat: '$' + delayBenefit.toLocaleString(),
-        body: `Optimizing when ${a.hasSpouse ? 'you and ' + a.spouseName : 'you'} claim Social Security could mean up to <strong class="insight-stat">$${delayBenefit.toLocaleString()}</strong> more in lifetime benefits. This is one of the highest-impact decisions in your plan.`,
+        body: `Optimizing when ${a.hasSpouse ? 'you and your spouse' : 'you'} claim Social Security could mean up to <strong class="insight-stat">$${delayBenefit.toLocaleString()}</strong> more in lifetime benefits. This is one of the highest-impact decisions in your plan.`,
       };
     }
     if (concerns.includes('running_out')) {
@@ -2471,7 +2779,7 @@ function getPreviewForm(id, a) {
         <div class="form-group"><div class="form-label">Annual return rate</div>
           <input class="form-input" type="text" value="7%" /></div>
         <div class="form-group"><div class="form-label">Owner</div>
-          <select class="form-select"><option>${a.name}</option>${a.hasSpouse ? '<option>'+a.spouseName+'</option>' : ''}</select></div>
+          <select class="form-select"><option>${a.name}</option>${a.hasSpouse ? '<option>Spouse</option>' : ''}</select></div>
       </div>
       <button class="btn btn-ghost" style="border:1px dashed var(--neutral-300); width:100%; margin-top:8px">+ Add another account</button>
     `,
@@ -2482,7 +2790,7 @@ function getPreviewForm(id, a) {
       <div class="form-group"><div class="form-label">When do you plan to start collecting?</div>
         <input class="form-input" type="range" min="62" max="70" value="67" style="padding:4px 0" />
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--neutral-500)"><span>Age 62 (~$${Math.round(a.ssEstimate*0.7).toLocaleString()}/mo)</span><span>Age 67 (~$${a.ssEstimate.toLocaleString()}/mo)</span><span>Age 70 (~$${Math.round(a.ssEstimate*1.24).toLocaleString()}/mo)</span></div></div>
-      ${a.hasSpouse ? `<div class="form-group"><div class="form-label">${a.spouseName}'s estimated monthly benefit</div><input class="form-input" type="text" value="$1,800" /></div>` : ''}
+      ${a.hasSpouse ? `<div class="form-group"><div class="form-label">Spouse's estimated monthly benefit</div><input class="form-input" type="text" value="$1,800" /></div>` : ''}
     `,
     'withdrawal-strategy': `
       <div class="form-group"><div class="form-label">Choose your withdrawal approach</div></div>
@@ -2744,68 +3052,252 @@ function setupPreviewListeners() {
 /* ============================================
    RENDER: DASHBOARD
    ============================================ */
+function renderSparkline(values) {
+  const w = 200, h = 40, pad = 4;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+    const y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block">
+    <polyline points="${pts.join(' ')}" fill="none" stroke="#16875e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function renderSuccessRing(pct) {
+  const r = 22, cx = 28, cy = 28, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct / 100);
+  let color = '#FB5004';
+  if (pct >= 50) color = '#FBBD04';
+  if (pct > 75) color = '#05AD73';
+  return `<svg width="56" height="56" viewBox="0 0 56 56">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E1E1DC" stroke-width="5"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+      stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"
+      style="transition: stroke-dashoffset 1s ease"/>
+  </svg>`;
+}
+
 function renderDashboard() {
   const a = ARCHETYPES[state.archetype];
-  const gaugeHtml = renderGauge(state.confidence);
   const completedCount = state.todos.filter(t => state.completedTodoIds.has(t.id)).length;
   const totalCount = state.todos.length;
   const incompleteTodos = state.todos.filter(t => !state.completedTodoIds.has(t.id)).slice(0, 3);
   const hasTodos = state.todos.length > 0;
 
-  // Accuracy messaging
-  let accLabel;
-  if (state.confidence <= 49) accLabel = 'Some of your plan inputs are missing or outdated.';
-  else if (state.confidence <= 84) accLabel = 'Some details could use a quick check.';
-  else accLabel = 'Your plan looks great!';
+  // Computed data
+  const netWorth = a.savings + a.homeValue;
+  const changeAmt = Math.round(netWorth * 0.023); // ~2.3% monthly change
+  const sparkVals = [netWorth * 0.91, netWorth * 0.93, netWorth * 0.94, netWorth * 0.96, netWorth * 0.98, netWorth];
 
-  const coachContent = hasTodos ? `
-    ${incompleteTodos.map(t => `
-      <div class="dashboard-todo-mini">
-        <div class="mini-dot ${t.tier}"></div>
-        <span class="mini-title">${t.title}</span>
-        ${t.tier === 'plus' ? '<span class="pplus-badge pplus-badge-sm">P+</span>' : `<span class="mini-time">~${t.minutes} min</span>`}
-      </div>
-    `).join('')}
-    ${incompleteTodos.length < (totalCount - completedCount) ? `<div style="text-align:center;padding-top:8px;font-size:13px;color:var(--neutral-500)">+${totalCount - completedCount - incompleteTodos.length} more items</div>` : ''}
-    <button class="btn btn-primary" id="viewAllTasks" style="width:100%;margin-top:16px">Review your plan tasks</button>
-  ` : `
-    <div class="dashboard-empty">
-      <div class="dashboard-empty-icon">📋</div>
-      <p>Complete triage to get personalized recommendations for improving your plan.</p>
-      <button class="btn btn-primary" id="runTriageFromEmpty" style="margin-top:12px">Get started</button>
-    </div>
-  `;
+  // Chance of success (rough heuristic)
+  const yearsInRetirement = 95 - a.retirementAge;
+  const annualExpense = a.monthlyExpenses * 12;
+  const ssAnnual = a.ssEstimate * 12;
+  const pensionAnnual = a.hasPension ? 24000 : 0;
+  const annualGap = annualExpense - ssAnnual - pensionAnnual;
+  const neededSavings = Math.max(0, annualGap) * yearsInRetirement;
+  const projectedSavings = a.timeline === 'retired' ? a.savings : a.savings * Math.pow(1.06, a.retirementAge - a.age);
+  const successPct = Math.min(98, Math.max(22, Math.round((projectedSavings / neededSavings) * 80)));
+
+  // Forecast for projected net worth
+  const forecastPoints = generateForecastData(state.archetype);
+  const peakPoint = forecastPoints.reduce((best, p) => p.value > best.value ? p : best, forecastPoints[0]);
+  const retPoint = forecastPoints.find(p => p.age === a.retirementAge) || forecastPoints[0];
+  const endPoint = forecastPoints[forecastPoints.length - 1];
+  const chartSvg = renderForecastChart(forecastPoints, a.retirementAge);
+
+  // Cash flow
+  const avgMonthlyIncome = Math.round((ssAnnual + pensionAnnual + (a.timeline === 'retired' ? 0 : a.workIncome)) / 12);
+  const incomeGood = avgMonthlyIncome >= a.monthlyExpenses;
+
+  // Coach / plan accuracy
+  const gaugeHtml = renderGauge(state.confidence);
+  const coachBadgeCount = hasTodos ? totalCount - completedCount : 0;
 
   return `
-    <div class="screen dashboard-layout">
-      <div class="dashboard-header">
-        <span class="dashboard-simulated-label">Simulated Dashboard</span>
-        <h1>Welcome back, ${a.name}</h1>
-        <p>Here's how your plan is looking${state.triageRunCount > 1 ? ` · Triage updated ${state.triageRunCount} times` : ''}</p>
+    <div class="planner-shell" style="margin-top:0">
+      <!-- Top bar -->
+      <div class="planner-topbar">
+        <button class="planner-topbar-hamburger" id="sidebarToggle">☰</button>
+        <div class="planner-topbar-logo">boldin</div>
+        <div class="planner-topbar-center">
+          <div class="planner-topbar-scenario">Current Plan ▾</div>
+        </div>
+        <div class="planner-topbar-right">
+          <span class="planner-topbar-link">Resources</span>
+          <div class="planner-topbar-avatar">${a.name.charAt(0)}</div>
+        </div>
       </div>
 
-      <div class="dashboard-grid">
-        <!-- Plan Accuracy Widget -->
-        <div class="dashboard-card">
-          <h3>Plan Accuracy</h3>
-          <div class="dashboard-accuracy-center">
-            ${gaugeHtml}
-            <div class="gauge-label" style="font-size:13px;margin-bottom:4px">${accLabel}</div>
-            <div style="font-size:14px;font-weight:600;color:var(--neutral-900);margin-top:8px">${completedCount} / ${totalCount} items completed</div>
+      <!-- Sidebar overlay (mobile) -->
+      <div class="planner-sidebar-overlay" id="sidebarOverlay"></div>
+
+      <!-- Sidebar -->
+      <div class="planner-sidebar" id="plannerSidebar">
+        <nav class="planner-sidebar-nav">
+          <button class="planner-nav-item active">
+            <span class="planner-nav-icon">◎</span> Overview
+          </button>
+          <button class="planner-nav-item" id="navMyPlan">
+            <span class="planner-nav-icon">☰</span> My Plan
+          </button>
+          <button class="planner-nav-item" id="navCoach">
+            <span class="planner-nav-icon">💡</span> Coach
+            ${coachBadgeCount > 0 ? `<span class="planner-nav-badge">${coachBadgeCount}</span>` : ''}
+          </button>
+          <button class="planner-nav-item">
+            <span class="planner-nav-icon">📊</span> Insights
+          </button>
+          <button class="planner-nav-item">
+            <span class="planner-nav-icon">🧭</span> Explorers
+          </button>
+          <div class="planner-nav-divider"></div>
+          <button class="planner-nav-item">
+            <span class="planner-nav-icon">↓</span> Download / Print
+          </button>
+        </nav>
+        <div class="planner-sidebar-upgrade">
+          <div class="pplus-badge" style="margin:0 auto 8px;width:28px;height:28px;font-size:11px">P+</div>
+          <p>Unlock advanced tools and 1:1 coaching</p>
+          <button class="btn btn-plus" style="font-size:12px;padding:6px 16px;width:100%">Upgrade to PlannerPlus</button>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="planner-content">
+        <div class="planner-content-inner">
+          <h2 class="dash-welcome">Welcome, ${a.name}</h2>
+
+          <div class="dash-grid">
+            <!-- LEFT COLUMN -->
+            <div class="dash-left">
+              <!-- Net Worth -->
+              <div class="dash-tile">
+                <div class="dash-tile-header">
+                  <span class="dash-tile-title">Current Net Worth</span>
+                  <button class="dash-tile-action">›</button>
+                </div>
+                <div class="dash-networth-value">$${netWorth.toLocaleString()}</div>
+                <div class="dash-sparkline">${renderSparkline(sparkVals)}</div>
+                <span class="dash-change positive">↑ $${changeAmt.toLocaleString()} from last month</span>
+              </div>
+
+              <!-- Chance of Success -->
+              <div class="dash-tile">
+                <div class="dash-tile-header">
+                  <span class="dash-tile-title">Chance of Success</span>
+                  <button class="dash-tile-action">›</button>
+                </div>
+                <div class="dash-success-row">
+                  <div class="dash-success-pct">${successPct}%</div>
+                  <div class="dash-success-ring">${renderSuccessRing(successPct)}</div>
+                </div>
+                <div class="dash-success-text">Probability of not running out of money in retirement</div>
+              </div>
+
+              <!-- Coach -->
+              <div class="dash-tile">
+                <div class="dash-tile-header">
+                  <span class="dash-tile-title">Coach</span>
+                  ${coachBadgeCount > 0 ? `<span style="font-size:11px;font-weight:600;background:var(--tertiary-50);color:var(--tertiary-400);padding:2px 8px;border-radius:10px">${coachBadgeCount} new</span>` : ''}
+                </div>
+                ${hasTodos ? `
+                  ${incompleteTodos.map(t => `
+                    <div class="dash-coach-item">
+                      <span class="dash-coach-bolt">⚡</span>
+                      <span class="dash-coach-title">${t.title}</span>
+                    </div>
+                  `).join('')}
+                  <div class="dash-coach-accuracy">
+                    <div style="flex-shrink:0">${gaugeHtml}</div>
+                    <div style="font-size:13px;color:var(--neutral-500)">Plan Accuracy: <strong style="color:var(--primary-800)">${state.confidence}%</strong></div>
+                  </div>
+                  <button class="dash-coach-see-all" id="viewAllTasks">See all →</button>
+                ` : `
+                  <div style="text-align:center;padding:16px;color:var(--neutral-500);font-size:14px">
+                    <p>Complete triage to get personalized recommendations.</p>
+                    <button class="btn btn-primary" id="runTriageFromEmpty" style="margin-top:12px;font-size:13px">Get started</button>
+                  </div>
+                `}
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="dash-right">
+              <!-- Projected Net Worth -->
+              <div class="dash-tile">
+                <div class="dash-tile-header">
+                  <span class="dash-tile-title">Projected Net Worth</span>
+                  <button class="dash-tile-action">›</button>
+                </div>
+                <div class="dash-proj-stats">
+                  <div>
+                    <div class="dash-proj-stat-label">At retirement (age ${a.retirementAge})</div>
+                    <div class="dash-proj-stat-value">$${Math.round(retPoint.value).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div class="dash-proj-stat-label">At longevity (age 95)</div>
+                    <div class="dash-proj-stat-value">$${Math.round(endPoint.value).toLocaleString()}</div>
+                  </div>
+                </div>
+                <div class="forecast-chart" style="height:200px">${chartSvg}</div>
+              </div>
+
+              <!-- Key Insight -->
+              <div class="dash-tile">
+                <div class="dash-insight">
+                  <span class="dash-insight-icon">💰</span>
+                  <div class="dash-insight-text">
+                    Your wealthiest year is projected to be <strong>age ${peakPoint.age}</strong> with a net worth of <strong>$${Math.round(peakPoint.value).toLocaleString()}</strong>. ${peakPoint.value > netWorth ? 'Great work!' : 'Adding more details to your plan could improve this.'}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Income & Expenses -->
+              <div class="dash-tile">
+                <div class="dash-tile-header">
+                  <span class="dash-tile-title">Retirement Cash Flow</span>
+                  <button class="dash-tile-action">›</button>
+                </div>
+                <span class="dash-cashflow-status ${incomeGood ? 'good' : 'warn'}">
+                  ${incomeGood ? '✓ Income covers expenses' : '⚠ Expenses exceed income'}
+                </span>
+                <div class="dash-cashflow-metrics">
+                  <div class="dash-cashflow-metric">
+                    <div class="dash-cashflow-metric-label">Avg. income in retirement</div>
+                    <div class="dash-cashflow-metric-value">$${avgMonthlyIncome.toLocaleString()}/mo</div>
+                  </div>
+                  <div class="dash-cashflow-metric">
+                    <div class="dash-cashflow-metric-label">Avg. expenses in retirement</div>
+                    <div class="dash-cashflow-metric-value">$${a.monthlyExpenses.toLocaleString()}/mo</div>
+                  </div>
+                </div>
+                <div class="dash-cashflow-bar">
+                  <div class="dash-cashflow-bar-income" style="flex:${avgMonthlyIncome}"></div>
+                  <div class="dash-cashflow-bar-expense" style="flex:${a.monthlyExpenses}"></div>
+                </div>
+                <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--neutral-500)">
+                  <span>● Income</span>
+                  <span style="color:var(--tertiary-400)">● Expenses</span>
+                </div>
+              </div>
+
+              <!-- Life changed -->
+              <div class="dash-rerun">
+                <div style="font-size:28px">🔄</div>
+                <div class="dash-rerun-text">
+                  <h4>Life changed?</h4>
+                  <p>Marriage, job change, new home — update your priorities.</p>
+                </div>
+                <button class="btn btn-secondary" id="rerunTriage" style="flex-shrink:0;font-size:13px">Update priorities</button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <!-- Coach Preview -->
-        <div class="dashboard-card">
-          <h3>Your Next Steps</h3>
-          ${coachContent}
-        </div>
-
-        <!-- Re-run Triage CTA -->
-        <div class="dashboard-rerun" style="grid-column: 1 / -1;">
-          <h3>Life changed?</h3>
-          <p>Marriage, job change, new home, or just a few years older — your priorities may have shifted.</p>
-          <button class="btn btn-secondary" id="rerunTriage">Update my priorities</button>
         </div>
       </div>
     </div>
@@ -2819,6 +3311,23 @@ function setupDashboardListeners() {
   document.getElementById('rerunTriage')?.addEventListener('click', rerunTriage);
   document.getElementById('runTriageFromEmpty')?.addEventListener('click', () => {
     setState({ screen: 'triage', triageStep: 0 });
+  });
+  document.getElementById('navCoach')?.addEventListener('click', () => {
+    setState({ screen: 'todolist' });
+  });
+  document.getElementById('navMyPlan')?.addEventListener('click', () => {
+    setState({ screen: 'todolist' });
+  });
+  // Sidebar toggle (mobile)
+  const sidebar = document.getElementById('plannerSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    sidebar?.classList.toggle('open');
+    overlay?.classList.toggle('active');
+  });
+  overlay?.addEventListener('click', () => {
+    sidebar?.classList.remove('open');
+    overlay?.classList.remove('active');
   });
 }
 
