@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boldin — Plan Triage Prototype</title>
+<style>
+/* ============================================
+   DESIGN SYSTEM
+   Colors from nr_react_app design tokens
+   ============================================ */
+:root {
+  --primary-800: #0d3f4a;
+  --primary-600: #476d75;
+  --primary-100: #d4e4e8;
+  --primary-50: #eaf2f4;
+  --secondary-600: #16875e;
+  --secondary-100: #c3e5d6;
+  --secondary-50: #f3f9f7;
+  --tertiary-400: #ff8f43;
+  --tertiary-100: #ffd4b0;
+  --tertiary-50: #fff4ed;
+  --neutral-900: #191711;
+  --neutral-700: #56564e;
+  --neutral-500: #898980;
+  --neutral-300: #c0c0b8;
+  --neutral-100: #e1e1dc;
+  --neutral-50: #f6f6f4;
+  --feedback-negative: #c70039;
+  --feedback-warning: #ffc453;
+  /* Plan Accuracy gauge colors (from PlanAccuracyGauge.tsx) */
+  --gauge-low: #FB5004;
+  --gauge-med: #FBBD04;
+  --gauge-high: #05AD73;
+  --gauge-inactive: #E1E1DC;
+  --white: #ffffff;
+  --sand: #fbf7f0;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --transition: 300ms ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--neutral-50);
+  color: var(--neutral-900);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ============================================
+   ARCHETYPE SWITCHER (demo only)
+   ============================================ */
+.demo-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: var(--primary-800);
+  color: var(--white);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.demo-bar span { opacity: 0.7; }
+.demo-bar select {
+  background: rgba(255,255,255,0.15);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.demo-bar button {
+  margin-left: auto;
+  background: rgba(255,255,255,0.15);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.demo-bar button:hover { background: rgba(255,255,255,0.25); }
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+#app {
+  margin-top: 44px;
+  min-height: calc(100vh - 44px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+}
+
+.screen {
+  width: 100%;
+  max-width: 720px;
+  opacity: 1;
+  transition: opacity var(--transition);
+}
+
+/* ============================================
+   TRIAGE SCREEN
+   ============================================ */
+.triage-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.triage-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 4px;
+}
+.triage-header p {
+  font-size: 15px;
+  color: var(--neutral-500);
+}
+
+.triage-progress {
+  width: 100%;
+  height: 3px;
+  background: var(--neutral-100);
+  border-radius: 2px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+.triage-progress-fill {
+  height: 100%;
+  background: var(--secondary-600);
+  border-radius: 2px;
+  transition: width 400ms ease;
+}
+
+.triage-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.question-container {
+  min-height: 300px;
+}
+
+.question-step {
+  display: none;
+}
+.question-step.active {
+  display: block;
+  animation: fadeSlideIn 300ms ease forwards;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-30px); }
+}
+
+.question-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--neutral-500);
+  margin-bottom: 8px;
+}
+.question-text {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary-800);
+  margin-bottom: 24px;
+  line-height: 1.3;
+}
+.question-subtext {
+  font-size: 14px;
+  color: var(--neutral-500);
+  margin-bottom: 20px;
+  margin-top: -16px;
+}
+
+/* Confirmation card (step 0) */
+.confirm-summary {
+  background: var(--sand);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.confirm-summary h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary-800);
+  margin-bottom: 12px;
+}
+.confirm-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+.confirm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.confirm-item .ci-label {
+  color: var(--neutral-500);
+  min-width: 70px;
+}
+.confirm-item .ci-value {
+  font-weight: 500;
+  color: var(--neutral-900);
+}
+.confirm-item .ci-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Option cards */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 2px solid var(--neutral-100);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 200ms ease;
+  background: var(--white);
+  user-select: none;
+}
+.option-card:hover {
+  border-color: var(--primary-600);
+  background: var(--primary-50);
+}
+.option-card.selected {
+  border-color: var(--secondary-600);
+  background: var(--secondary-50);
+}
+.option-card .opt-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--neutral-300);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+}
+.option-card.selected .opt-radio {
+  border-color: var(--secondary-600);
+  background: var(--secondary-600);
+}
+.option-card.selected .opt-radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--white);
+  border-radius: 50%;
+}
+/* Multi-select checkbox style */
+.option-card .opt-check {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--neutral-300);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+  font-size: 12px;
+  color: transparent;
+}
+.option-card.selected .opt-check {
+  border-color: var(--secondary-600);
+  background: var(--secondary-600);
+  color: var(--white);
+}
+.option-card .opt-text {
+  font-size: 15px;
+  color: var(--neutral-900);
+}
+.option-card .opt-desc {
+  font-size: 13px;
+  color: var(--neutral-500);
+  margin-top: 2px;
+}
+
+/* Navigation buttons */
+.triage-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--neutral-100);
+}
+.btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms ease;
+  border: none;
+}
+.btn-primary {
+  background: var(--primary-800);
+  color: var(--white);
+}
+.btn-primary:hover { background: #0a333c; }
+.btn-primary:disabled {
+  background: var(--neutral-300);
+  cursor: not-allowed;
+}
+.btn-ghost {
+  background: none;
+  color: var(--neutral-500);
+  padding: 10px 16px;
+}
+.btn-ghost:hover { color: var(--neutral-900); }
+.btn-large {
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: var(--radius-md);
+}
+.btn-secondary {
+  background: var(--secondary-600);
+  color: var(--white);
+}
+.btn-secondary:hover { background: #127a54; }
+.btn-plus {
+  background: var(--tertiary-400);
+  color: var(--white);
+}
+.btn-plus:hover { background: #f07e2f; }
+
+/* ============================================
+   TODO LIST SCREEN
+   ============================================ */
+.todo-layout {
+  max-width: 960px;
+  width: 100%;
+}
+
+.todo-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.todo-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 6px;
+}
+.todo-header p {
+  font-size: 15px;
+  color: var(--neutral-500);
+}
+
+.todo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 768px) {
+  .todo-grid {
+    grid-template-columns: 1fr 280px;
+    gap: 32px;
+  }
+}
+
+/* Sidebar */
+.todo-sidebar {
+  order: -1;
+}
+@media (min-width: 768px) {
+  .todo-sidebar {
+    order: 1;
+    position: sticky;
+    top: 68px;
+  }
+}
+.sidebar-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.sidebar-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--neutral-500);
+  margin-bottom: 16px;
+}
+
+/* SVG Gauge */
+.gauge-wrapper {
+  position: relative;
+  width: 160px;
+  height: 100px;
+  margin: 0 auto 12px;
+}
+.gauge-wrapper svg {
+  width: 100%;
+  height: 100%;
+}
+.gauge-score {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-800);
+}
+.gauge-score span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--neutral-500);
+}
+.gauge-label {
+  font-size: 14px;
+  color: var(--neutral-700);
+  margin-bottom: 4px;
+}
+.gauge-sublabel {
+  font-size: 12px;
+  color: var(--neutral-500);
+}
+
+.sidebar-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  text-align: left;
+}
+.sidebar-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--neutral-100);
+}
+.sidebar-stat:last-child { border-bottom: none; }
+.sidebar-stat .ss-label { color: var(--neutral-500); }
+.sidebar-stat .ss-value { font-weight: 600; color: var(--neutral-900); }
+
+/* Todo sections */
+.todo-main { order: 0; }
+.todo-section {
+  margin-bottom: 24px;
+}
+.todo-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.todo-section-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.todo-section-header .badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.badge-free {
+  background: var(--secondary-50);
+  color: var(--secondary-600);
+}
+.badge-plus {
+  background: var(--tertiary-50);
+  color: var(--tertiary-400);
+}
+
+/* Todo items */
+.todo-item {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 200ms ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-left: 3px solid transparent;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.todo-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+.todo-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.todo-item.visible:hover {
+  transform: translateY(-1px);
+}
+.todo-item.free { border-left-color: var(--secondary-600); }
+.todo-item.plus { border-left-color: var(--tertiary-400); }
+.todo-item.completed {
+  opacity: 0.5;
+  border-left-color: var(--neutral-300);
+}
+.todo-item.completed:hover {
+  opacity: 0.7;
+}
+
+.todo-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--neutral-300);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 200ms ease;
+}
+.todo-item.free .todo-check { border-color: var(--secondary-600); }
+.todo-item.plus .todo-check { border-color: var(--tertiary-400); }
+.todo-item.completed .todo-check {
+  background: var(--secondary-600);
+  border-color: var(--secondary-600);
+  color: var(--white);
+}
+
+.todo-content { flex: 1; min-width: 0; }
+.todo-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.todo-item.completed .todo-title {
+  text-decoration: line-through;
+  color: var(--neutral-500);
+}
+.todo-why {
+  font-size: 13px;
+  color: var(--neutral-500);
+  line-height: 1.4;
+}
+.todo-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+.todo-meta-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--neutral-50);
+  color: var(--neutral-500);
+}
+.todo-meta-tag.plus-tag {
+  background: var(--tertiary-50);
+  color: var(--tertiary-400);
+  font-weight: 600;
+}
+
+/* P+ Badge (matches PlanUpgradeIcon.tsx) */
+.pplus-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--tertiary-400);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: -0.3px;
+}
+.pplus-badge-sm {
+  width: 18px;
+  height: 18px;
+  font-size: 8px;
+}
+
+/* Plus CTA inline */
+.plus-cta-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--tertiary-50);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--tertiary-400);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+.plus-cta-inline:hover {
+  background: var(--tertiary-100);
+}
+
+.todo-arrow {
+  color: var(--neutral-300);
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.todo-item:hover .todo-arrow { color: var(--neutral-500); }
+
+/* ============================================
+   PREVIEW SCREEN
+   ============================================ */
+.preview-screen {
+  max-width: 680px;
+  width: 100%;
+}
+.preview-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--primary-600);
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.preview-back:hover { color: var(--primary-800); }
+
+.preview-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.preview-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--neutral-100);
+}
+.preview-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 4px;
+}
+
+.preview-why-box {
+  background: var(--secondary-50);
+  border-left: 3px solid var(--secondary-600);
+  padding: 12px 16px;
+  margin: 20px 28px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 14px;
+  color: var(--neutral-700);
+}
+.preview-why-box.plus-why {
+  background: var(--tertiary-50);
+  border-left-color: var(--tertiary-400);
+}
+
+.preview-form {
+  padding: 24px 28px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutral-700);
+  margin-bottom: 6px;
+  display: block;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  color: var(--neutral-900);
+  font-family: inherit;
+  transition: border-color 200ms ease;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-600);
+}
+.form-hint {
+  font-size: 12px;
+  color: var(--neutral-500);
+  margin-top: 4px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  color: var(--neutral-900);
+  font-family: inherit;
+  background: var(--white);
+  cursor: pointer;
+}
+
+/* Plus teaser overlay */
+.plus-teaser {
+  position: relative;
+}
+.plus-teaser .preview-form {
+  filter: blur(3px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.plus-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 32px;
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  z-index: 2;
+}
+.plus-overlay h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 8px;
+}
+.plus-overlay p {
+  font-size: 14px;
+  color: var(--neutral-700);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.plus-features {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.plus-features li {
+  font-size: 13px;
+  color: var(--neutral-700);
+  padding: 4px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.plus-features li::before {
+  content: '✓';
+  color: var(--secondary-600);
+  font-weight: 700;
+}
+
+/* Preview footer */
+.preview-footer {
+  padding: 16px 28px;
+  border-top: 1px solid var(--neutral-100);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Checklist style (estate docs) */
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--neutral-100);
+}
+.checklist-item:last-child { border-bottom: none; }
+.checklist-toggle {
+  display: flex;
+  gap: 4px;
+}
+.checklist-toggle button {
+  padding: 4px 10px;
+  border: 1px solid var(--neutral-100);
+  background: var(--white);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--neutral-500);
+}
+.checklist-toggle button.active {
+  background: var(--secondary-600);
+  border-color: var(--secondary-600);
+  color: var(--white);
+}
+.checklist-label {
+  font-size: 14px;
+  color: var(--neutral-900);
+}
+
+/* Strategy cards (withdrawal) */
+.strategy-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.strategy-card {
+  padding: 16px;
+  border: 2px solid var(--neutral-100);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+.strategy-card:hover {
+  border-color: var(--primary-600);
+}
+.strategy-card.selected {
+  border-color: var(--secondary-600);
+  background: var(--secondary-50);
+}
+.strategy-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.strategy-card p {
+  font-size: 13px;
+  color: var(--neutral-500);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 600px) {
+  .triage-card { padding: 20px; }
+  .question-text { font-size: 19px; }
+  .confirm-items { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .preview-header { padding: 20px; }
+  .preview-form { padding: 20px; }
+  .preview-footer { padding: 12px 20px; }
+  .preview-why-box { margin: 16px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Demo archetype switcher -->
+<div class="demo-bar">
+  <span>Demo persona:</span>
+  <select id="archetypeSelect" onchange="switchArchetype(this.value)">
+    <option value="nearRetiree">Sarah, 58 — Near-retiree, homeowner</option>
+    <option value="retiree">Jim, 67 — Retired, pension + SS</option>
+    <option value="midCareer">Alex, 42 — Mid-career, renter, debt</option>
+    <option value="youngSaver">Maya, 31 — Early career, first home</option>
+  </select>
+  <button onclick="resetFlow()">Reset</button>
+</div>
+
+<div id="app"></div>
+
+<script>
+/* ============================================
+   ARCHETYPES (simulated onboarding data)
+   ============================================ */
+const ARCHETYPES = {
+  nearRetiree: {
+    name: 'Sarah',
+    age: 58,
+    retirementAge: 65,
+    timeline: 'near', // computed: 65-58=7 years
+    gender: 'F',
+    hasSpouse: true,
+    spouseName: 'David',
+    spouseAge: 60,
+    housing: 'own_mortgage', // own with mortgage
+    homeValue: 480000,
+    savings: 420000,
+    workIncome: 95000,
+    hasPension: false,
+    hasSocialSecurity: true,
+    ssEstimate: 2400,
+    incomeSourceCount: 2, // work + SS
+    monthlyExpenses: 5200,
+  },
+  retiree: {
+    name: 'Jim',
+    age: 67,
+    retirementAge: 65,
+    timeline: 'retired',
+    gender: 'M',
+    hasSpouse: true,
+    spouseName: 'Linda',
+    spouseAge: 64,
+    housing: 'own_none', // own no mortgage
+    homeValue: 350000,
+    savings: 680000,
+    workIncome: 0,
+    hasPension: true,
+    hasSocialSecurity: true,
+    ssEstimate: 2800,
+    incomeSourceCount: 3, // pension + SS + withdrawals
+    monthlyExpenses: 4100,
+  },
+  midCareer: {
+    name: 'Alex',
+    age: 42,
+    retirementAge: 65,
+    timeline: 'mid', // 23 years
+    gender: 'M',
+    hasSpouse: false,
+    spouseName: null,
+    spouseAge: null,
+    housing: 'rent',
+    homeValue: 0,
+    savings: 145000,
+    workIncome: 78000,
+    hasPension: false,
+    hasSocialSecurity: true,
+    ssEstimate: 1900,
+    incomeSourceCount: 1,
+    monthlyExpenses: 3800,
+  },
+  youngSaver: {
+    name: 'Maya',
+    age: 31,
+    retirementAge: 62,
+    timeline: 'far', // 31 years
+    gender: 'F',
+    hasSpouse: true,
+    spouseName: 'Jordan',
+    spouseAge: 33,
+    housing: 'own_mortgage',
+    homeValue: 320000,
+    savings: 67000,
+    workIncome: 110000,
+    hasPension: false,
+    hasSocialSecurity: true,
+    ssEstimate: 2100,
+    incomeSourceCount: 1,
+    monthlyExpenses: 4500,
+  }
+};
+
+/* ============================================
+   APP STATE
+   ============================================ */
+let state = {
+  screen: 'triage', // 'triage' | 'todolist' | 'preview'
+  archetype: 'nearRetiree',
+  triageStep: 0, // 0=confirm, 1-4=questions
+  answers: {},
+  todos: [],
+  completedTodoIds: new Set(),
+  selectedTodoId: null,
+  confidence: 15,
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  saveState();
+  render();
+}
+
+/* ============================================
+   LOCALSTORAGE PERSISTENCE
+   ============================================ */
+const STORAGE_KEY = 'boldin_triage_prototype';
+
+function saveState() {
+  try {
+    const toSave = {
+      screen: state.screen,
+      archetype: state.archetype,
+      triageStep: state.triageStep,
+      answers: state.answers,
+      completedTodoIds: [...state.completedTodoIds],
+      confidence: state.confidence,
+      hasTodos: state.todos.length > 0,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch(e) { /* ignore */ }
+}
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!saved) return false;
+    state.archetype = saved.archetype || 'nearRetiree';
+    state.triageStep = saved.triageStep || 0;
+    state.answers = saved.answers || {};
+    state.completedTodoIds = new Set(saved.completedTodoIds || []);
+    state.screen = saved.screen || 'triage';
+    state.confidence = saved.confidence || 15;
+    // Regenerate todos if we had them
+    if (saved.hasTodos && (saved.screen === 'todolist' || saved.screen === 'preview')) {
+      state.todos = generateTodos(state.archetype, state.answers);
+      state.confidence = computeConfidence(state.todos, state.completedTodoIds);
+    }
+    // Update archetype selector
+    const sel = document.getElementById('archetypeSelect');
+    if (sel) sel.value = state.archetype;
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearSaved() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+}
+
+/* ============================================
+   TRIAGE QUESTIONS
+   ============================================ */
+function getQuestions(archetype) {
+  const a = ARCHETYPES[archetype];
+  const questions = [];
+
+  // Q1: Housing plans (only if homeowner)
+  if (a.housing.startsWith('own')) {
+    questions.push({
+      id: 'housingPlans',
+      label: 'Question 1',
+      text: 'Are you thinking about any changes to your living situation?',
+      type: 'single',
+      options: [
+        { value: 'downsize', text: 'Might downsize or relocate' },
+        { value: 'second', text: 'Considering a second property' },
+        { value: 'happy', text: 'Happy where I am' },
+        { value: 'unsure', text: 'Not sure yet' },
+      ]
+    });
+  }
+
+  // Q2: Debt picture
+  questions.push({
+    id: 'debt',
+    label: `Question ${questions.length + 1}`,
+    text: a.housing.startsWith('own')
+      ? 'How would you describe your debt situation, besides your mortgage?'
+      : 'How would you describe your debt situation?',
+    type: 'single',
+    options: [
+      { value: 'none', text: 'No debt at all' },
+      { value: 'some', text: 'Some debt (credit cards, car, student loans)' },
+      { value: 'significant', text: 'Significant debt I\'m working to pay down' },
+    ]
+  });
+
+  // Q3: Family
+  if (a.hasSpouse) {
+    questions.push({
+      id: 'family',
+      label: `Question ${questions.length + 1}`,
+      text: 'Beyond you and ' + a.spouseName + ', who else are you planning for?',
+      type: 'multi',
+      options: [
+        { value: 'children', text: 'Children still at home' },
+        { value: 'aging_parents', text: 'Aging parents' },
+        { value: 'none', text: 'No one else' },
+      ]
+    });
+  } else {
+    questions.push({
+      id: 'family',
+      label: `Question ${questions.length + 1}`,
+      text: 'Who are you planning for?',
+      type: 'multi',
+      options: [
+        { value: 'spouse', text: 'Spouse or partner' },
+        { value: 'children', text: 'Children' },
+        { value: 'aging_parents', text: 'Aging parents' },
+        { value: 'just_me', text: 'Just myself' },
+      ]
+    });
+  }
+
+  // Q4: Top concerns
+  questions.push({
+    id: 'concerns',
+    label: `Question ${questions.length + 1}`,
+    text: 'What keeps you up at night financially?',
+    subtext: 'Pick up to 3',
+    type: 'multi',
+    maxSelect: 3,
+    options: [
+      { value: 'enough', text: 'Will I have enough to retire?' },
+      { value: 'healthcare', text: 'Healthcare costs' },
+      { value: 'running_out', text: 'Running out of money' },
+      { value: 'legacy', text: 'Leaving something for my family' },
+      { value: 'debt_payoff', text: 'Paying off debt' },
+      { value: 'ss_timing', text: 'Social Security timing' },
+      { value: 'taxes', text: 'Tax efficiency' },
+      { value: 'ltc', text: 'Long-term care costs' },
+    ]
+  });
+
+  return questions;
+}
+
+/* ============================================
+   TODO CATALOG & GENERATION
+   ============================================ */
+const TODO_CATALOG = [
+  // -- Assets --
+  { id: 'savings', title: 'Review your savings & investment accounts', planSection: 'Accounts & Savings', tier: 'free', baseWeight: 80, minutes: 5, delta: 22.4 },
+  { id: 'other-assets', title: 'Document other assets', planSection: 'Other Assets', tier: 'free', baseWeight: 35, minutes: 3, delta: 18.6 },
+  // -- Housing --
+  { id: 'housing-current', title: 'Verify your primary residence details', planSection: 'Housing', tier: 'free', baseWeight: 70, minutes: 4, delta: 17.7 },
+  { id: 'housing-other', title: 'Add other real estate properties', planSection: 'Other Real Estate', tier: 'plus', baseWeight: 30, minutes: 5, delta: 28.5 },
+  { id: 'housing-future', title: 'Model future housing changes', planSection: 'Future Housing', tier: 'plus', baseWeight: 40, minutes: 3, delta: 38.7 },
+  // -- Debt --
+  { id: 'debt', title: 'Add your debts', planSection: 'Debts', tier: 'free', baseWeight: 40, minutes: 4, delta: 21.5 },
+  // -- Income --
+  { id: 'work-income', title: 'Set up your work income', planSection: 'Work Income', tier: 'free', baseWeight: 70, minutes: 5, delta: 16.2 },
+  { id: 'social-security', title: 'Optimize your Social Security strategy', planSection: 'Social Security', tier: 'free', baseWeight: 75, minutes: 5, delta: 21.8 },
+  { id: 'pensions', title: 'Add pension income', planSection: 'Pensions', tier: 'free', baseWeight: 40, minutes: 4, delta: 19.7 },
+  { id: 'passive-income', title: 'Add passive income sources', planSection: 'Passive Income', tier: 'free', baseWeight: 35, minutes: 3, delta: 21.1 },
+  { id: 'windfalls', title: 'Plan for windfalls & inheritances', planSection: 'Windfalls', tier: 'free', baseWeight: 25, minutes: 3, delta: 22.5 },
+  // -- Expenses --
+  { id: 'recurring-expenses', title: 'Refine your monthly expenses', planSection: 'Monthly Expenses', tier: 'free', baseWeight: 75, minutes: 5, delta: 19.9 },
+  { id: 'medical-expenses', title: 'Add healthcare expenses', planSection: 'Healthcare', tier: 'free', baseWeight: 65, minutes: 4, delta: 25.4 },
+  { id: 'medical-after-65', title: 'Plan your Medicare costs', planSection: 'Medicare', tier: 'free', baseWeight: 60, minutes: 4, delta: 19.3 },
+  { id: 'ltc', title: 'Consider long-term care costs', planSection: 'Long-Term Care', tier: 'free', baseWeight: 50, minutes: 3, delta: 33.4 },
+  // -- Money Flows --
+  { id: 'contributions', title: 'Set up savings contributions', planSection: 'Contributions', tier: 'free', baseWeight: 55, minutes: 4, delta: -3.6 },
+  { id: 'excess-income', title: 'Plan for excess income', planSection: 'Excess Income', tier: 'free', baseWeight: 50, minutes: 3, delta: 21.8 },
+  { id: 'withdrawal-strategy', title: 'Choose your withdrawal strategy', planSection: 'Withdrawal Strategy', tier: 'free', baseWeight: 60, minutes: 5, delta: 36.8 },
+  { id: 'transfers', title: 'Set up Roth conversions & transfers', planSection: 'Transfers & Conversions', tier: 'plus', baseWeight: 50, minutes: 5, delta: 61.3 },
+  // -- Estate --
+  { id: 'estate-documents', title: 'Review your estate planning documents', planSection: 'Estate Documents', tier: 'free', baseWeight: 45, minutes: 3, delta: 44.6 },
+  { id: 'estate-legacy', title: 'Set your financial legacy goals', planSection: 'Legacy', tier: 'free', baseWeight: 40, minutes: 3, delta: 31.2 },
+];
+
+function generateTodos(archetype, answers) {
+  const a = ARCHETYPES[archetype];
+  const scored = TODO_CATALOG.map(item => {
+    let score = item.baseWeight;
+
+    // ---- Timeline-based adjustments ----
+    if (a.timeline === 'retired') {
+      if (item.id === 'work-income' && a.workIncome === 0) score -= 50;
+      if (item.id === 'contributions') score -= 35;
+      if (item.id === 'withdrawal-strategy') score += 30;
+      if (item.id === 'social-security') score += 10;
+      if (item.id === 'excess-income') score += 25;
+      if (item.id === 'ltc') score += 15;
+      if (item.id === 'medical-after-65') score += 15;
+      if (item.id === 'estate-documents') score += 15;
+    }
+    if (a.timeline === 'near') {
+      if (item.id === 'social-security') score += 20;
+      if (item.id === 'withdrawal-strategy') score += 20;
+      if (item.id === 'medical-expenses') score += 10;
+      if (item.id === 'recurring-expenses') score += 10;
+      if (item.id === 'transfers') score += 15;
+    }
+    if (a.timeline === 'mid') {
+      if (item.id === 'contributions') score += 20;
+      if (item.id === 'social-security') score -= 15;
+      if (item.id === 'withdrawal-strategy') score -= 20;
+      if (item.id === 'medical-after-65') score -= 15;
+    }
+    if (a.timeline === 'far') {
+      if (item.id === 'contributions') score += 20;
+      if (item.id === 'social-security') score -= 30;
+      if (item.id === 'withdrawal-strategy') score -= 40;
+      if (item.id === 'medical-after-65') score -= 25;
+      if (item.id === 'ltc') score -= 20;
+      if (item.id === 'excess-income') score -= 20;
+      if (item.id === 'estate-documents') score -= 20;
+    }
+
+    // ---- Housing ----
+    if (a.housing === 'rent') {
+      if (item.id === 'housing-current') score -= 40;
+      if (item.id === 'housing-future') score -= 40;
+      if (item.id === 'housing-other') score -= 20;
+    }
+    if (answers.housingPlans === 'downsize') {
+      if (item.id === 'housing-future') score += 35;
+    }
+    if (answers.housingPlans === 'second') {
+      if (item.id === 'housing-future') score += 25;
+      if (item.id === 'housing-other') score += 20;
+    }
+    if (answers.housingPlans === 'happy') {
+      if (item.id === 'housing-future') score -= 30;
+    }
+
+    // ---- Debt ----
+    if (answers.debt === 'none') {
+      if (item.id === 'debt') score -= 50;
+    }
+    if (answers.debt === 'some') {
+      if (item.id === 'debt') score += 25;
+    }
+    if (answers.debt === 'significant') {
+      if (item.id === 'debt') score += 40;
+    }
+
+    // ---- Family ----
+    const fam = answers.family || [];
+    if (fam.includes('children') || fam.includes('spouse')) {
+      if (item.id === 'estate-documents') score += 25;
+      if (item.id === 'estate-legacy') score += 15;
+    }
+    if (fam.includes('aging_parents')) {
+      if (item.id === 'ltc') score += 10;
+      if (item.id === 'windfalls') score += 20;
+    }
+    if (fam.includes('just_me') || fam.includes('none')) {
+      if (!a.hasSpouse) {
+        if (item.id === 'estate-documents') score -= 15;
+        if (item.id === 'estate-legacy') score -= 20;
+      }
+    }
+
+    // ---- Concerns ----
+    const c = answers.concerns || [];
+    if (c.includes('enough')) {
+      if (item.id === 'savings') score += 15;
+      if (item.id === 'contributions') score += 15;
+      if (item.id === 'windfalls') score += 15;
+    }
+    if (c.includes('healthcare')) {
+      if (item.id === 'medical-expenses') score += 20;
+      if (item.id === 'medical-after-65') score += 20;
+      if (item.id === 'ltc') score += 20;
+    }
+    if (c.includes('running_out')) {
+      if (item.id === 'withdrawal-strategy') score += 25;
+      if (item.id === 'savings') score += 10;
+      if (item.id === 'recurring-expenses') score += 10;
+    }
+    if (c.includes('legacy')) {
+      if (item.id === 'estate-legacy') score += 35;
+      if (item.id === 'estate-documents') score += 25;
+      if (item.id === 'other-assets') score += 15;
+    }
+    if (c.includes('debt_payoff')) {
+      if (item.id === 'debt') score += 15;
+    }
+    if (c.includes('ss_timing')) {
+      if (item.id === 'social-security') score += 25;
+    }
+    if (c.includes('taxes')) {
+      if (item.id === 'transfers') score += 25;
+      if (item.id === 'withdrawal-strategy') score += 15;
+    }
+    if (c.includes('ltc')) {
+      if (item.id === 'ltc') score += 25;
+    }
+
+    // ---- Savings level ----
+    if (a.savings > 500000) {
+      if (item.id === 'transfers') score += 20;
+      if (item.id === 'other-assets') score += 20;
+    }
+    if (a.savings < 100000) {
+      if (item.id === 'transfers') score -= 20;
+    }
+
+    // ---- Pension ----
+    if (a.hasPension) {
+      if (item.id === 'pensions') score += 40;
+    } else {
+      if (item.id === 'pensions') score -= 30;
+    }
+
+    // ---- Passive income ----
+    if (a.incomeSourceCount <= 1 && !a.hasPension) {
+      if (item.id === 'passive-income') score -= 15;
+    }
+
+    return { ...item, relevance: Math.max(0, Math.min(100, score)) };
+  });
+
+  // Filter low-relevance, sort
+  const active = scored.filter(t => t.relevance > 15);
+  active.sort((a, b) => {
+    if (a.tier === 'free' && b.tier === 'plus') return -1;
+    if (a.tier === 'plus' && b.tier === 'free') return 1;
+    return b.relevance - a.relevance;
+  });
+
+  // Generate why messages
+  active.forEach(t => {
+    t.why = getWhyMessage(t, a, answers);
+  });
+
+  return active;
+}
+
+function getWhyMessage(todo, archetype, answers) {
+  const c = answers.concerns || [];
+  const fam = answers.family || [];
+  const templates = {
+    'savings': () => {
+      if (c.includes('running_out')) return 'Since running out of money is a concern, confirming your account balances is the foundation.';
+      if (archetype.savings > 500000) return 'With substantial savings, making sure every account is captured improves accuracy.';
+      return 'Your savings accounts are the engine of your retirement plan.';
+    },
+    'social-security': () => {
+      if (c.includes('ss_timing')) return 'You flagged Social Security timing — the difference between claiming at 62 vs. 70 can be $100K+.';
+      if (archetype.timeline === 'near') return 'With retirement approaching, your SS claiming age is one of your biggest financial decisions.';
+      if (archetype.timeline === 'retired') return 'Confirming your Social Security details ensures your income projections are accurate.';
+      return 'Social Security is typically 30-40% of retirement income — worth getting right.';
+    },
+    'withdrawal-strategy': () => {
+      if (c.includes('running_out')) return 'The right withdrawal strategy is the #1 lever for making your money last.';
+      if (archetype.timeline === 'retired') return 'You\'re actively drawing from savings — the right strategy can save thousands in taxes.';
+      if (archetype.timeline === 'near') return 'Planning your drawdown strategy before retirement gives you time to optimize.';
+      return 'How you draw down savings can extend your money by years.';
+    },
+    'transfers': () => {
+      if (c.includes('taxes')) return 'You flagged tax efficiency — Roth conversions are the main tool Plus users use to reduce lifetime taxes.';
+      if (archetype.savings > 500000) return 'With your savings level, Roth conversion opportunities could save significant taxes long-term.';
+      return 'Strategic account transfers can optimize your tax situation significantly.';
+    },
+    'debt': () => {
+      if (answers.debt === 'significant') return 'Paying down high-interest debt is often the highest-return "investment" you can make.';
+      if (c.includes('debt_payoff')) return 'Getting the full debt picture lets you model different payoff strategies.';
+      return 'Documenting your debts ensures accurate cash flow projections.';
+    },
+    'housing-future': () => {
+      if (answers.housingPlans === 'downsize') return 'You\'re considering downsizing — Plus lets you model the exact impact on your retirement timeline.';
+      if (answers.housingPlans === 'second') return 'Modeling a second property purchase shows how it affects your long-term finances.';
+      return 'Model future housing changes to see their impact on your plan.';
+    },
+    'housing-other': () => {
+      return 'Additional properties significantly affect your net worth and expense projections.';
+    },
+    'housing-current': () => {
+      return 'Your home is likely your largest asset — keeping details current improves plan accuracy.';
+    },
+    'ltc': () => {
+      if (c.includes('ltc')) return 'You identified long-term care as a concern — modeling costs now gives you time to plan.';
+      if (c.includes('healthcare')) return 'Long-term care is the biggest healthcare wildcard in retirement — 70% of people over 65 need it.';
+      if (fam.includes('aging_parents')) return 'With aging parents, you\'re seeing LTC costs firsthand. Planning for your own is wise.';
+      return '70% of people over 65 will need some form of long-term care.';
+    },
+    'estate-documents': () => {
+      if (c.includes('legacy')) return 'Estate documents are the foundation for carrying out your legacy wishes.';
+      if (fam.includes('children') || archetype.hasSpouse) return 'With family to plan for, estate documents protect everyone\'s interests.';
+      return 'Estate documents ensure your wishes are followed regardless of what happens.';
+    },
+    'estate-legacy': () => {
+      if (c.includes('legacy')) return 'Setting a specific legacy goal helps the planner optimize between spending and leaving behind.';
+      return 'Defining what you want to leave behind helps balance your spending plan.';
+    },
+    'work-income': () => {
+      if (archetype.timeline === 'near') return 'Accurate income details for your final working years improve retirement projections.';
+      return 'Your work income drives savings contributions and tax planning.';
+    },
+    'recurring-expenses': () => {
+      if (c.includes('running_out')) return 'Knowing your actual spending is essential for projecting how long your money lasts.';
+      return 'Accurate expenses are the foundation of reliable retirement projections.';
+    },
+    'medical-expenses': () => {
+      if (c.includes('healthcare')) return 'Healthcare costs are a top concern — let\'s make sure your plan accounts for them.';
+      return 'Healthcare costs rise faster than inflation — capturing them separately improves accuracy.';
+    },
+    'medical-after-65': () => {
+      if (c.includes('healthcare')) return 'Medicare planning is critical — premiums, supplements, and drug costs add up fast.';
+      return 'Medicare costs vary widely by coverage choices — modeling yours improves plan accuracy.';
+    },
+    'contributions': () => {
+      if (c.includes('enough')) return 'Maximizing contributions now has a compounding effect on your retirement readiness.';
+      return 'Tracking what you\'re saving helps project when you\'ll hit your retirement goals.';
+    },
+    'excess-income': () => {
+      if (archetype.timeline === 'retired') return 'RMDs and other income may create excess — planning for it avoids unnecessary taxes.';
+      return 'Planning for excess income helps avoid tax surprises and missed opportunities.';
+    },
+    'pensions': () => {
+      if (archetype.timeline === 'retired') return 'Confirming your pension details ensures your income projections are accurate.';
+      return 'Pension income is a major piece of your retirement picture.';
+    },
+    'passive-income': () => {
+      return 'Passive income sources reduce how much you need to withdraw from savings.';
+    },
+    'windfalls': () => {
+      if (fam.includes('aging_parents')) return 'With aging parents, planning for a potential inheritance helps you prepare either way.';
+      return 'Expected windfalls or inheritances can meaningfully change your plan projections.';
+    },
+    'other-assets': () => {
+      if (c.includes('legacy')) return 'Documenting all assets gives a complete picture of what you can leave behind.';
+      return 'Other assets (business interests, valuables) contribute to your overall financial picture.';
+    },
+  };
+  return (templates[todo.id] || (() => ''))();
+}
+
+/* ============================================
+   PLAN CONFIDENCE
+   ============================================ */
+function computeConfidence(todos, completedIds) {
+  const base = 15;
+  if (!todos.length) return base;
+  const totalWeight = todos.reduce((s, t) => s + t.relevance, 0);
+  const completedWeight = todos.filter(t => completedIds.has(t.id)).reduce((s, t) => s + t.relevance, 0);
+  return Math.round(base + (completedWeight / totalWeight) * 85);
+}
+
+/* ============================================
+   RENDER
+   ============================================ */
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'triage') {
+    app.innerHTML = renderTriage();
+    setupTriageListeners();
+  } else if (state.screen === 'todolist') {
+    app.innerHTML = renderTodoList();
+    setupTodoListeners();
+    // Stagger animation
+    setTimeout(() => {
+      document.querySelectorAll('.todo-item').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), i * 60);
+      });
+    }, 50);
+  } else if (state.screen === 'preview') {
+    app.innerHTML = renderPreview();
+    setupPreviewListeners();
+  }
+}
+
+/* ============================================
+   RENDER: TRIAGE
+   ============================================ */
+function renderTriage() {
+  const a = ARCHETYPES[state.archetype];
+  const questions = getQuestions(state.archetype);
+  const totalSteps = questions.length + 1; // +1 for confirm
+  const progress = (state.triageStep / totalSteps) * 100;
+
+  let stepsHtml = '';
+
+  // Step 0: Confirmation
+  const timelineLabel = { retired: 'Retired', near: 'Retiring in ~7 years', mid: 'Retiring in ~23 years', far: 'Retiring in ~31 years' }[a.timeline];
+  const housingLabel = { own_mortgage: 'Homeowner (mortgage)', own_none: 'Homeowner (no mortgage)', rent: 'Renting' }[a.housing];
+  const savingsLabel = a.savings >= 1000000 ? `$${(a.savings/1000000).toFixed(1)}M` : `$${Math.round(a.savings/1000)}K`;
+
+  stepsHtml += `
+    <div class="question-step ${state.triageStep === 0 ? 'active' : ''}" data-step="0">
+      <div class="question-text">Let's personalize your plan, ${a.name}</div>
+      <p class="question-subtext" style="margin-bottom:20px">Here's what we know from your profile. Confirm this looks right, then we'll ask a few more questions.</p>
+      <div class="confirm-summary">
+        <div class="confirm-items">
+          <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' ('+a.spouseName+': '+a.spouseAge+')' : ''}</span></div>
+          <div class="confirm-item"><span class="ci-icon">📅</span><span class="ci-label">Timeline</span><span class="ci-value">${timelineLabel}</span></div>
+          <div class="confirm-item"><span class="ci-icon">🏠</span><span class="ci-label">Housing</span><span class="ci-value">${housingLabel}</span></div>
+          <div class="confirm-item"><span class="ci-icon">💰</span><span class="ci-label">Saved</span><span class="ci-value">${savingsLabel}</span></div>
+          <div class="confirm-item"><span class="ci-icon">💼</span><span class="ci-label">Income</span><span class="ci-value">${a.workIncome > 0 ? '$'+a.workIncome.toLocaleString()+'/yr' : 'Retired'}</span></div>
+          <div class="confirm-item"><span class="ci-icon">🏥</span><span class="ci-label">SS Est.</span><span class="ci-value">$${a.ssEstimate.toLocaleString()}/mo</span></div>
+          ${a.hasPension ? '<div class="confirm-item"><span class="ci-icon">📋</span><span class="ci-label">Pension</span><span class="ci-value">Yes</span></div>' : ''}
+          ${a.hasSpouse ? '<div class="confirm-item"><span class="ci-icon">👫</span><span class="ci-label">Spouse</span><span class="ci-value">'+a.spouseName+'</span></div>' : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Dynamic questions
+  questions.forEach((q, i) => {
+    const stepIdx = i + 1;
+    const isMulti = q.type === 'multi';
+    const selectedVals = isMulti ? (state.answers[q.id] || []) : [state.answers[q.id]];
+
+    let optionsHtml = q.options.map(opt => {
+      const isSelected = selectedVals.includes(opt.value);
+      return `
+        <div class="option-card ${isSelected ? 'selected' : ''}" data-qid="${q.id}" data-value="${opt.value}" data-multi="${isMulti}">
+          <div class="${isMulti ? 'opt-check' : 'opt-radio'}">${isMulti && isSelected ? '✓' : ''}</div>
+          <div><div class="opt-text">${opt.text}</div></div>
+        </div>
+      `;
+    }).join('');
+
+    stepsHtml += `
+      <div class="question-step ${state.triageStep === stepIdx ? 'active' : ''}" data-step="${stepIdx}">
+        <div class="question-label">${q.label} of ${questions.length}</div>
+        <div class="question-text">${q.text}</div>
+        ${q.subtext ? `<p class="question-subtext">${q.subtext}</p>` : ''}
+        <div class="options-grid">${optionsHtml}</div>
+      </div>
+    `;
+  });
+
+  const isLastStep = state.triageStep === questions.length;
+  const canContinue = state.triageStep === 0 || (() => {
+    const q = questions[state.triageStep - 1];
+    if (!q) return false;
+    if (q.type === 'multi') return (state.answers[q.id] || []).length > 0;
+    return !!state.answers[q.id];
+  })();
+
+  return `
+    <div class="screen">
+      <div class="triage-header">
+        <h1>Personalize Your Plan</h1>
+        <p>About 60 seconds — helps us focus on what matters most for you</p>
+      </div>
+      <div class="triage-progress"><div class="triage-progress-fill" style="width:${progress}%"></div></div>
+      <div class="triage-card">
+        <div class="question-container">${stepsHtml}</div>
+        <div class="triage-nav">
+          <button class="btn btn-ghost" id="triageBack" ${state.triageStep === 0 ? 'style="visibility:hidden"' : ''}>← Back</button>
+          <button class="btn btn-primary ${isLastStep && canContinue ? 'btn-secondary' : ''}" id="triageNext" ${!canContinue && state.triageStep > 0 ? 'disabled' : ''}>
+            ${state.triageStep === 0 ? 'Looks right — continue' : isLastStep ? 'Show my plan →' : 'Continue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setupTriageListeners() {
+  const questions = getQuestions(state.archetype);
+
+  // Option clicks
+  document.querySelectorAll('.option-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const qid = card.dataset.qid;
+      const val = card.dataset.value;
+      const isMulti = card.dataset.multi === 'true';
+      const q = questions.find(q => q.id === qid);
+
+      if (isMulti) {
+        let current = state.answers[qid] || [];
+        // "none" / "just_me" are exclusive
+        if (val === 'none' || val === 'just_me') {
+          current = current.includes(val) ? [] : [val];
+        } else {
+          current = current.filter(v => v !== 'none' && v !== 'just_me');
+          current = current.includes(val) ? current.filter(v => v !== val) : [...current, val];
+          if (q.maxSelect && current.length > q.maxSelect) current = current.slice(-q.maxSelect);
+        }
+        state.answers[qid] = current;
+      } else {
+        state.answers[qid] = val;
+        // Auto-advance for single select after brief delay
+        setTimeout(() => {
+          advanceTriage();
+        }, 300);
+      }
+      render();
+    });
+  });
+
+  document.getElementById('triageNext')?.addEventListener('click', advanceTriage);
+  document.getElementById('triageBack')?.addEventListener('click', () => {
+    if (state.triageStep > 0) setState({ triageStep: state.triageStep - 1 });
+  });
+}
+
+function advanceTriage() {
+  const questions = getQuestions(state.archetype);
+  if (state.triageStep < questions.length) {
+    setState({ triageStep: state.triageStep + 1 });
+  } else {
+    // Generate todos and go to list
+    const todos = generateTodos(state.archetype, state.answers);
+    setState({ screen: 'todolist', todos, confidence: computeConfidence(todos, state.completedTodoIds) });
+  }
+}
+
+/* ============================================
+   RENDER: TODO LIST
+   ============================================ */
+function renderTodoList() {
+  const freeTodos = state.todos.filter(t => t.tier === 'free');
+  const plusTodos = state.todos.filter(t => t.tier === 'plus');
+  const totalMinutes = state.todos.reduce((s, t) => s + t.minutes, 0);
+  const completedCount = state.completedTodoIds.size;
+
+  const renderItem = (t) => {
+    const done = state.completedTodoIds.has(t.id);
+    return `
+      <div class="todo-item ${t.tier} ${done ? 'completed' : ''}" data-id="${t.id}">
+        ${t.tier === 'plus' ? '<div class="pplus-badge">P+</div>' : `<div class="todo-check">${done ? '✓' : ''}</div>`}
+        <div class="todo-content">
+          <div class="todo-title">
+            ${t.title}
+          </div>
+          <div class="todo-why">${t.why}</div>
+          <div class="todo-meta">
+            <span class="todo-meta-tag">~${t.minutes} min</span>
+            <span class="todo-meta-tag">${t.planSection}</span>
+          </div>
+          ${t.tier === 'plus' ? `<div class="plus-cta-inline"><span class="pplus-badge pplus-badge-sm">P+</span> Upgrade to PlannerPlus</div>` : ''}
+        </div>
+        <div class="todo-arrow">›</div>
+      </div>
+    `;
+  };
+
+  const gaugeHtml = renderGauge(state.confidence);
+  // Messaging from PlanAccuracyGauge.tsx
+  let accLabel, accSublabel;
+  if (state.confidence <= 49) {
+    accLabel = 'Some of your plan inputs are missing or outdated.';
+    accSublabel = 'Complete items below to improve accuracy.';
+  } else if (state.confidence <= 84) {
+    accLabel = 'Some details could use a quick check.';
+    accSublabel = 'Your plan projections are becoming reliable.';
+  } else {
+    accLabel = 'Your plan looks great!';
+    accSublabel = 'Fine-tuning is still helpful.';
+  }
+
+  return `
+    <div class="screen todo-layout">
+      <div class="todo-header">
+        <h1>Your Personalized Plan</h1>
+        <p>We've prioritized what matters most based on your situation</p>
+      </div>
+      <div class="todo-grid">
+        <div class="todo-main">
+          <div class="todo-section">
+            <div class="todo-section-header">
+              <h2>Start Here</h2>
+              <span class="badge badge-free">${freeTodos.length} items</span>
+            </div>
+            ${freeTodos.map(renderItem).join('')}
+          </div>
+          ${plusTodos.length ? `
+          <div class="todo-section">
+            <div class="todo-section-header">
+              <h2>Go Deeper with PlannerPlus</h2>
+              <span class="badge badge-plus"><span class="pplus-badge pplus-badge-sm">P+</span> ${plusTodos.length} items</span>
+            </div>
+            ${plusTodos.map(renderItem).join('')}
+          </div>
+          ` : ''}
+        </div>
+        <div class="todo-sidebar">
+          <div class="sidebar-card">
+            <h3>Plan Accuracy</h3>
+            ${gaugeHtml}
+            <div class="gauge-label">${accLabel}</div>
+            <div class="gauge-sublabel">${accSublabel}</div>
+            <div class="sidebar-stats">
+              <div class="sidebar-stat"><span class="ss-label">Items</span><span class="ss-value">${completedCount} / ${state.todos.length}</span></div>
+              <div class="sidebar-stat"><span class="ss-label">Est. time remaining</span><span class="ss-value">~${totalMinutes - state.todos.filter(t=>state.completedTodoIds.has(t.id)).reduce((s,t)=>s+t.minutes,0)} min</span></div>
+              ${plusTodos.length ? `<div class="sidebar-stat"><span class="ss-label"><span class="pplus-badge pplus-badge-sm">P+</span> PlannerPlus sections</span><span class="ss-value">${plusTodos.length} available</span></div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGauge(score) {
+  // SVG arc gauge matching PlanAccuracyGauge.tsx
+  const r = 60;
+  const cx = 80;
+  const cy = 80;
+
+  // Background arc
+  const bgD = describeArc(cx, cy, r, 180, 0);
+  // Score arc
+  const scoreEnd = 180 - (score / 100) * 180;
+  const scoreD = describeArc(cx, cy, r, 180, scoreEnd);
+
+  // Colors from PlanAccuracyGauge thresholds: low<=49, med<=84, high>84
+  let color = '#FB5004'; // low (orange-red)
+  if (score >= 50) color = '#FBBD04'; // medium (gold)
+  if (score > 84) color = '#05AD73'; // high (green)
+
+  const scoreLabel = score < 15 ? '<15' : score;
+
+  return `
+    <div class="gauge-wrapper">
+      <svg viewBox="0 0 160 100">
+        <path d="${bgD}" fill="none" stroke="#E1E1DC" stroke-width="10" stroke-linecap="round"/>
+        <path d="${scoreD}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" style="transition: all 1s ease"/>
+      </svg>
+      <div class="gauge-score">${scoreLabel}<span>%</span></div>
+    </div>
+  `;
+}
+
+function describeArc(cx, cy, r, startDeg, endDeg) {
+  const startRad = (startDeg * Math.PI) / 180;
+  const endRad = (endDeg * Math.PI) / 180;
+  const x1 = cx + r * Math.cos(startRad);
+  const y1 = cy - r * Math.sin(startRad);
+  const x2 = cx + r * Math.cos(endRad);
+  const y2 = cy - r * Math.sin(endRad);
+  const largeArc = startDeg - endDeg > 180 ? 1 : 0;
+  return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+}
+
+function setupTodoListeners() {
+  document.querySelectorAll('.todo-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      setState({ screen: 'preview', selectedTodoId: id });
+    });
+  });
+}
+
+/* ============================================
+   RENDER: PREVIEW
+   ============================================ */
+function renderPreview() {
+  const todo = state.todos.find(t => t.id === state.selectedTodoId);
+  if (!todo) return '<div>Not found</div>';
+  const a = ARCHETYPES[state.archetype];
+
+  const isPlus = todo.tier === 'plus';
+  const formHtml = getPreviewForm(todo.id, a);
+
+  if (isPlus) {
+    const pitch = getPlusPitch(todo.id, a, state.answers);
+    return `
+      <div class="screen preview-screen">
+        <button class="preview-back" id="previewBack">← Back to your plan</button>
+        <div class="preview-card">
+          <div class="preview-header">
+            <h1>${todo.title}</h1>
+          </div>
+          <div class="preview-why-box plus-why">${todo.why}</div>
+          <div class="plus-teaser" style="position:relative; min-height:300px">
+            <div class="preview-form">${formHtml}</div>
+            <div class="plus-overlay">
+              <div style="margin-bottom:12px"><span class="pplus-badge" style="width:36px;height:36px;font-size:14px">P+</span></div>
+              <h3>Unlock with PlannerPlus</h3>
+              <p>${pitch}</p>
+              <ul class="plus-features">
+                <li>Model unlimited scenarios</li>
+                <li>See impact on your retirement date</li>
+                <li>Detailed tax projections</li>
+              </ul>
+              <button class="btn btn-plus btn-large">Upgrade to PlannerPlus</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="screen preview-screen">
+      <button class="preview-back" id="previewBack">← Back to your plan</button>
+      <div class="preview-card">
+        <div class="preview-header">
+          <h1>${todo.title}</h1>
+        </div>
+        <div class="preview-why-box">${todo.why}</div>
+        <div class="preview-form">${formHtml}</div>
+        <div class="preview-footer">
+          <span style="font-size:13px;color:var(--neutral-500)">This is a preview — data is not saved in this prototype</span>
+          <button class="btn btn-primary" id="markDone">Done — next item →</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getPreviewForm(id, a) {
+  const forms = {
+    'savings': `
+      <div class="form-group"><div class="form-label">Account type</div>
+        <select class="form-select"><option>401(k)</option><option>Traditional IRA</option><option>Roth IRA</option><option>Brokerage</option><option>Savings Account</option></select></div>
+      <div class="form-group"><div class="form-label">Current balance</div>
+        <input class="form-input" type="text" value="$${a.savings.toLocaleString()}" /></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Annual return rate</div>
+          <input class="form-input" type="text" value="7%" /></div>
+        <div class="form-group"><div class="form-label">Owner</div>
+          <select class="form-select"><option>${a.name}</option>${a.hasSpouse ? '<option>'+a.spouseName+'</option>' : ''}</select></div>
+      </div>
+      <button class="btn btn-ghost" style="border:1px dashed var(--neutral-300); width:100%; margin-top:8px">+ Add another account</button>
+    `,
+    'social-security': `
+      <div class="form-group"><div class="form-label">Your estimated monthly benefit at full retirement age</div>
+        <input class="form-input" type="text" value="$${a.ssEstimate.toLocaleString()}" />
+        <div class="form-hint">Based on your income history. You can adjust this.</div></div>
+      <div class="form-group"><div class="form-label">When do you plan to start collecting?</div>
+        <input class="form-input" type="range" min="62" max="70" value="67" style="padding:4px 0" />
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--neutral-500)"><span>Age 62 (~$${Math.round(a.ssEstimate*0.7).toLocaleString()}/mo)</span><span>Age 67 (~$${a.ssEstimate.toLocaleString()}/mo)</span><span>Age 70 (~$${Math.round(a.ssEstimate*1.24).toLocaleString()}/mo)</span></div></div>
+      ${a.hasSpouse ? `<div class="form-group"><div class="form-label">${a.spouseName}'s estimated monthly benefit</div><input class="form-input" type="text" value="$1,800" /></div>` : ''}
+    `,
+    'withdrawal-strategy': `
+      <div class="form-group"><div class="form-label">Choose your withdrawal approach</div></div>
+      <div class="strategy-cards">
+        <div class="strategy-card selected"><h4>Spend what I need <span class="badge badge-free">Default</span></h4><p>Pull from savings as expenses require. Simple and flexible.</p></div>
+        <div class="strategy-card"><h4>Fixed percentage <span class="badge badge-plus">Plus</span></h4><p>Withdraw a set % annually (e.g. 4% rule). Disciplined approach.</p></div>
+        <div class="strategy-card"><h4>Fixed dollar amount <span class="badge badge-plus">Plus</span></h4><p>Withdraw a specific amount each year. Predictable income.</p></div>
+      </div>
+    `,
+    'recurring-expenses': `
+      <div class="form-group"><div class="form-label">Monthly expenses (excluding mortgage, taxes, healthcare)</div>
+        <input class="form-input" type="text" value="$${a.monthlyExpenses.toLocaleString()}" />
+        <div class="form-hint">We handle mortgage, property tax, and healthcare separately</div></div>
+      <div class="form-group"><div class="form-label">Do you expect expenses to change in retirement?</div>
+        <div class="options-grid" style="pointer-events:none">
+          <div class="option-card selected"><div class="opt-radio"></div><div class="opt-text">Yes, they'll decrease</div></div>
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">About the same</div></div>
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">They'll increase</div></div>
+        </div></div>
+    `,
+    'work-income': `
+      <div class="form-group"><div class="form-label">Annual salary (gross)</div>
+        <input class="form-input" type="text" value="$${a.workIncome.toLocaleString()}" /></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Expected annual raise</div>
+          <input class="form-input" type="text" value="3%" /></div>
+        <div class="form-group"><div class="form-label">Retirement age</div>
+          <input class="form-input" type="text" value="${a.retirementAge}" /></div>
+      </div>
+      <div class="form-group"><div class="form-label">Planning to work part-time in retirement?</div>
+        <div class="options-grid" style="pointer-events:none">
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">Yes</div></div>
+          <div class="option-card selected"><div class="opt-radio"></div><div class="opt-text">No</div></div>
+        </div></div>
+    `,
+    'debt': `
+      <div class="form-group"><div class="form-label">Add a debt</div></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Type</div>
+          <select class="form-select"><option>Credit card</option><option>Auto loan</option><option>Student loan</option><option>Personal loan</option><option>Other</option></select></div>
+        <div class="form-group"><div class="form-label">Balance</div>
+          <input class="form-input" type="text" placeholder="$0" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Interest rate (APR)</div>
+          <input class="form-input" type="text" placeholder="0%" /></div>
+        <div class="form-group"><div class="form-label">Monthly payment</div>
+          <input class="form-input" type="text" placeholder="$0" /></div>
+      </div>
+      <button class="btn btn-ghost" style="border:1px dashed var(--neutral-300); width:100%; margin-top:8px">+ Add another debt</button>
+    `,
+    'estate-documents': `
+      <div class="form-group"><div class="form-label">Do you have these documents in place?</div></div>
+      <div class="checklist-item"><span class="checklist-label" style="flex:1">Will or Living Trust</span><div class="checklist-toggle"><button>Yes</button><button>No</button><button class="active">Not sure</button></div></div>
+      <div class="checklist-item"><span class="checklist-label" style="flex:1">Power of Attorney</span><div class="checklist-toggle"><button>Yes</button><button>No</button><button class="active">Not sure</button></div></div>
+      <div class="checklist-item"><span class="checklist-label" style="flex:1">Healthcare Directive / Living Will</span><div class="checklist-toggle"><button>Yes</button><button>No</button><button class="active">Not sure</button></div></div>
+      <div class="checklist-item"><span class="checklist-label" style="flex:1">Beneficiary Designations Updated</span><div class="checklist-toggle"><button>Yes</button><button>No</button><button class="active">Not sure</button></div></div>
+      <div class="checklist-item"><span class="checklist-label" style="flex:1">Life Insurance Policy Review</span><div class="checklist-toggle"><button>Yes</button><button>No</button><button class="active">Not sure</button></div></div>
+    `,
+    'ltc': `
+      <div class="form-group"><div class="form-label">How do you plan to handle long-term care costs?</div>
+        <div class="strategy-cards">
+          <div class="strategy-card selected"><h4>Self-fund from savings</h4><p>Use existing savings and investments to cover LTC if needed.</p></div>
+          <div class="strategy-card"><h4>Long-term care insurance</h4><p>A dedicated policy that covers nursing home, assisted living, or home care.</p></div>
+          <div class="strategy-card"><h4>Hybrid life/LTC policy</h4><p>Life insurance with a long-term care rider. Covers both scenarios.</p></div>
+        </div></div>
+      <div class="form-row" style="margin-top:16px">
+        <div class="form-group"><div class="form-label">Estimated monthly cost</div>
+          <input class="form-input" type="text" value="$4,500" /><div class="form-hint">National average for nursing home</div></div>
+        <div class="form-group"><div class="form-label">Expected duration (years)</div>
+          <input class="form-input" type="text" value="3" /><div class="form-hint">Average LTC need</div></div>
+      </div>
+    `,
+    'medical-expenses': `
+      <div class="form-group"><div class="form-label">Annual healthcare expenses (pre-retirement)</div>
+        <input class="form-input" type="text" value="$6,000" /><div class="form-hint">Including premiums, deductibles, and out-of-pocket costs</div></div>
+      <div class="form-group"><div class="form-label">Do you have employer-sponsored health insurance?</div>
+        <div class="options-grid" style="pointer-events:none">
+          <div class="option-card selected"><div class="opt-radio"></div><div class="opt-text">Yes</div></div>
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">No — individual/marketplace plan</div></div>
+        </div></div>
+    `,
+    'medical-after-65': `
+      <div class="form-group"><div class="form-label">Medicare monthly premium estimate</div>
+        <input class="form-input" type="text" value="$175" /><div class="form-hint">Part B standard premium for 2026</div></div>
+      <div class="form-group"><div class="form-label">Medigap/supplement plan</div>
+        <select class="form-select"><option>Plan G (~$150/mo)</option><option>Plan N (~$120/mo)</option><option>Medicare Advantage ($0-50/mo)</option><option>Not sure yet</option></select></div>
+      <div class="form-group"><div class="form-label">Part D (drug coverage) monthly premium</div>
+        <input class="form-input" type="text" value="$35" /></div>
+    `,
+    'estate-legacy': `
+      <div class="form-group"><div class="form-label">What would you like to leave behind?</div>
+        <div class="strategy-cards">
+          <div class="strategy-card"><h4>A specific dollar amount</h4><p>Target a set inheritance or charitable gift amount.</p></div>
+          <div class="strategy-card selected"><h4>Whatever is left over</h4><p>Prioritize your own retirement spending; heirs get the remainder.</p></div>
+          <div class="strategy-card"><h4>As much as possible</h4><p>Minimize spending to maximize what you leave behind.</p></div>
+        </div></div>
+    `,
+    'contributions': `
+      <div class="form-group"><div class="form-label">Monthly retirement savings contribution</div>
+        <input class="form-input" type="text" value="$1,500" /></div>
+      <div class="form-group"><div class="form-label">Employer match</div>
+        <input class="form-input" type="text" value="6%" /><div class="form-hint">Percentage of salary your employer matches</div></div>
+      <div class="form-group"><div class="form-label">Do you max out your contributions?</div>
+        <div class="options-grid" style="pointer-events:none">
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">Yes</div></div>
+          <div class="option-card selected"><div class="opt-radio"></div><div class="opt-text">No</div></div>
+        </div></div>
+    `,
+    'pensions': `
+      <div class="form-group"><div class="form-label">Pension type</div>
+        <select class="form-select"><option>Monthly pension</option><option>Lump sum at retirement</option><option>Cash balance plan</option></select></div>
+      <div class="form-group"><div class="form-label">Estimated monthly benefit</div>
+        <input class="form-input" type="text" placeholder="$0" /></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Start age</div>
+          <input class="form-input" type="text" value="${a.retirementAge}" /></div>
+        <div class="form-group"><div class="form-label">Includes COLA?</div>
+          <select class="form-select"><option>No</option><option>Yes</option></select></div>
+      </div>
+    `,
+    'excess-income': `
+      <div class="form-group"><div class="form-label">What happens with income you don't spend?</div>
+        <div class="strategy-cards">
+          <div class="strategy-card selected"><h4>Reinvest in savings</h4><p>Excess goes back into your investment accounts.</p></div>
+          <div class="strategy-card"><h4>Spend it</h4><p>Adjust lifestyle spending upward to match income.</p></div>
+          <div class="strategy-card"><h4>Gift or donate</h4><p>Direct excess toward charitable giving or family gifts.</p></div>
+        </div></div>
+    `,
+    'passive-income': `
+      <div class="form-group"><div class="form-label">Passive income source</div>
+        <select class="form-select"><option>Rental income</option><option>Royalties</option><option>Business income</option><option>Other</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Monthly amount</div>
+          <input class="form-input" type="text" placeholder="$0" /></div>
+        <div class="form-group"><div class="form-label">Expected until age</div>
+          <input class="form-input" type="text" placeholder="90" /></div>
+      </div>
+    `,
+    'windfalls': `
+      <div class="form-group"><div class="form-label">Expected windfall type</div>
+        <select class="form-select"><option>Inheritance</option><option>Property sale</option><option>Business sale</option><option>Legal settlement</option><option>Other</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Estimated amount</div>
+          <input class="form-input" type="text" placeholder="$0" /></div>
+        <div class="form-group"><div class="form-label">Expected year</div>
+          <input class="form-input" type="text" placeholder="2030" /></div>
+      </div>
+      <div class="form-hint">Even rough estimates help — you can update this later.</div>
+    `,
+    'other-assets': `
+      <div class="form-group"><div class="form-label">Asset type</div>
+        <select class="form-select"><option>Business interest</option><option>Collectibles/valuables</option><option>Trust assets</option><option>Other</option></select></div>
+      <div class="form-group"><div class="form-label">Estimated current value</div>
+        <input class="form-input" type="text" placeholder="$0" /></div>
+      <div class="form-group"><div class="form-label">Do you plan to sell this?</div>
+        <div class="options-grid" style="pointer-events:none">
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">Yes, before retirement</div></div>
+          <div class="option-card"><div class="opt-radio"></div><div class="opt-text">Yes, during retirement</div></div>
+          <div class="option-card selected"><div class="opt-radio"></div><div class="opt-text">No plans to sell</div></div>
+        </div></div>
+    `,
+    'housing-current': `
+      <div class="form-group"><div class="form-label">Estimated home value</div>
+        <input class="form-input" type="text" value="$${a.homeValue.toLocaleString()}" /></div>
+      ${a.housing === 'own_mortgage' ? `
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Mortgage balance</div>
+          <input class="form-input" type="text" value="$220,000" /></div>
+        <div class="form-group"><div class="form-label">Monthly payment</div>
+          <input class="form-input" type="text" value="$1,650" /></div>
+      </div>
+      <div class="form-group"><div class="form-label">Interest rate</div>
+        <input class="form-input" type="text" value="3.5%" /></div>` : ''}
+    `,
+    // Plus teasers
+    'transfers': `
+      <div class="form-group"><div class="form-label">From account</div>
+        <select class="form-select"><option>Traditional IRA</option><option>401(k)</option></select></div>
+      <div class="form-group"><div class="form-label">To account</div>
+        <select class="form-select"><option>Roth IRA</option><option>Brokerage</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Annual amount</div>
+          <input class="form-input" type="text" placeholder="$50,000" /></div>
+        <div class="form-group"><div class="form-label">From age — to age</div>
+          <input class="form-input" type="text" placeholder="${a.age} — ${a.retirementAge}" /></div>
+      </div>
+    `,
+    'housing-future': `
+      <div class="form-group"><div class="form-label">What change are you considering?</div>
+        <select class="form-select"><option>Downsize / sell and buy smaller</option><option>Relocate to lower cost area</option><option>Reverse mortgage</option><option>Refinance</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">At what age?</div>
+          <input class="form-input" type="text" placeholder="${a.retirementAge}" /></div>
+        <div class="form-group"><div class="form-label">New home value</div>
+          <input class="form-input" type="text" placeholder="$300,000" /></div>
+      </div>
+    `,
+    'housing-other': `
+      <div class="form-group"><div class="form-label">Property type</div>
+        <select class="form-select"><option>Rental property</option><option>Vacation home</option><option>Land</option><option>Commercial</option></select></div>
+      <div class="form-group"><div class="form-label">Estimated value</div>
+        <input class="form-input" type="text" placeholder="$0" /></div>
+      <div class="form-group"><div class="form-label">Monthly rental income (if any)</div>
+        <input class="form-input" type="text" placeholder="$0" /></div>
+    `,
+  };
+  return forms[id] || '<p style="color:var(--neutral-500); padding:20px">Section preview coming soon</p>';
+}
+
+function getPlusPitch(id, a, answers) {
+  const pitches = {
+    'transfers': a.savings > 500000
+      ? `With $${Math.round(a.savings/1000)}K+ in savings, Roth conversions before retirement could save you tens of thousands in taxes. Plus members complete this section 61% more often — it's the #1 differentiator.`
+      : `Strategic Roth conversions and account transfers can significantly reduce your lifetime tax bill. This is the most impactful Plus feature.`,
+    'housing-future': answers.housingPlans === 'downsize'
+      ? `You're thinking about downsizing — modeling the exact financial impact (sale proceeds, new mortgage, timeline) shows how it affects your retirement date and income.`
+      : `Housing changes are one of the biggest financial decisions in retirement. Plus lets you model different scenarios to see what works best.`,
+    'housing-other': `Additional properties affect your net worth, tax situation, and cash flow. Plus lets you model rental income, appreciation, and sale scenarios.`,
+  };
+  return pitches[id] || 'Unlock this section with Plus to see the full impact on your plan.';
+}
+
+function setupPreviewListeners() {
+  document.getElementById('previewBack')?.addEventListener('click', () => {
+    setState({ screen: 'todolist' });
+  });
+  document.getElementById('markDone')?.addEventListener('click', () => {
+    const newCompleted = new Set(state.completedTodoIds);
+    newCompleted.add(state.selectedTodoId);
+    // Find next incomplete todo
+    const nextTodo = state.todos.find(t => !newCompleted.has(t.id) && t.id !== state.selectedTodoId);
+    const conf = computeConfidence(state.todos, newCompleted);
+    setState({
+      completedTodoIds: newCompleted,
+      confidence: conf,
+      screen: 'todolist',
+      selectedTodoId: null,
+    });
+  });
+
+  // Checklist toggles
+  document.querySelectorAll('.checklist-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Strategy card selection
+  document.querySelectorAll('.strategy-card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.parentElement.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+}
+
+/* ============================================
+   DEMO CONTROLS
+   ============================================ */
+function switchArchetype(val) {
+  clearSaved();
+  state = {
+    screen: 'triage',
+    archetype: val,
+    triageStep: 0,
+    answers: {},
+    todos: [],
+    completedTodoIds: new Set(),
+    selectedTodoId: null,
+    confidence: 15,
+  };
+  render();
+}
+
+function resetFlow() {
+  clearSaved();
+  switchArchetype(state.archetype);
+}
+
+// Initial render — restore from localStorage if available
+if (!loadState()) {
+  render();
+} else {
+  render();
+}
+</script>
+</body>
+</html>
