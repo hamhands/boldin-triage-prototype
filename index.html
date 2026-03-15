@@ -804,6 +804,147 @@ body {
   font-weight: 700;
 }
 
+/* ============================================
+   INSIGHT SCREEN
+   ============================================ */
+.insight-screen {
+  max-width: 720px;
+  width: 100%;
+}
+.insight-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.insight-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 4px;
+}
+.insight-header p {
+  font-size: 15px;
+  color: var(--neutral-500);
+}
+
+.insight-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+/* Forecast chart */
+.forecast-chart {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  margin-bottom: 12px;
+}
+.forecast-chart svg {
+  width: 100%;
+  height: 100%;
+}
+.forecast-legend {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--neutral-500);
+  margin-bottom: 8px;
+}
+.forecast-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.forecast-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.forecast-label {
+  text-align: center;
+  font-size: 13px;
+  color: var(--neutral-500);
+  margin-top: 4px;
+}
+
+/* Insight callout */
+.insight-callout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px;
+  background: var(--secondary-50);
+  border-left: 4px solid var(--secondary-600);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin-bottom: 20px;
+}
+.insight-callout-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.insight-callout h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 4px;
+}
+.insight-callout p {
+  font-size: 14px;
+  color: var(--neutral-700);
+  line-height: 1.5;
+}
+.insight-callout .insight-stat {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--secondary-600);
+}
+
+/* Accuracy + CTA row */
+.insight-bottom {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .insight-bottom {
+    flex-direction: column;
+  }
+}
+.insight-accuracy {
+  flex: 0 0 180px;
+  text-align: center;
+}
+.insight-accuracy h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--neutral-500);
+  margin-bottom: 8px;
+}
+.insight-accuracy .gauge-label {
+  font-size: 13px;
+}
+.insight-cta {
+  flex: 1;
+  text-align: center;
+  padding: 20px;
+}
+.insight-cta h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 8px;
+}
+.insight-cta p {
+  font-size: 14px;
+  color: var(--neutral-500);
+  margin-bottom: 16px;
+}
+
 /* Preview footer */
 .preview-footer {
   padding: 16px 28px;
@@ -1243,7 +1384,7 @@ function loadState() {
     state.hasCompletedTriageOnce = saved.hasCompletedTriageOnce || false;
     state.triageRunCount = saved.triageRunCount || 0;
     // Regenerate todos if we had them
-    if (saved.hasTodos && (saved.screen === 'todolist' || saved.screen === 'preview' || saved.screen === 'dashboard')) {
+    if (saved.hasTodos && (saved.screen === 'insight' || saved.screen === 'todolist' || saved.screen === 'preview' || saved.screen === 'dashboard')) {
       state.todos = generateTodos(state.archetype, state.answers);
       state.confidence = computeConfidence(state.todos, state.completedTodoIds);
     }
@@ -1663,6 +1804,9 @@ function render() {
   } else if (state.screen === 'triage') {
     app.innerHTML = renderTriage();
     setupTriageListeners();
+  } else if (state.screen === 'insight') {
+    app.innerHTML = renderInsight();
+    setupInsightListeners();
   } else if (state.screen === 'todolist') {
     app.innerHTML = renderTodoList();
     setupTodoListeners();
@@ -1876,16 +2020,245 @@ function advanceTriage() {
   if (state.triageStep < questions.length) {
     setState({ triageStep: state.triageStep + 1 });
   } else {
-    // Generate todos and go to list
+    // Generate todos and go to insight screen
     const todos = generateTodos(state.archetype, state.answers);
     setState({
-      screen: 'todolist',
+      screen: 'insight',
       todos,
       confidence: computeConfidence(todos, state.completedTodoIds),
       hasCompletedTriageOnce: true,
       triageRunCount: (state.triageRunCount || 0) + 1,
     });
   }
+}
+
+/* ============================================
+   RENDER: INSIGHT SCREEN
+   ============================================ */
+function generateInsight(archetype, answers) {
+  const a = ARCHETYPES[archetype];
+  const concerns = answers.concerns || [];
+
+  // Pick the most relevant insight based on archetype + answers
+  if (a.timeline === 'near' || a.timeline === 'retired') {
+    if (concerns.includes('ss_timing') || a.hasSocialSecurity) {
+      const delayBenefit = Math.round(a.ssEstimate * 0.32 * 12 * (95 - a.age));
+      return {
+        icon: '📈',
+        title: 'Social Security Timing Matters',
+        stat: '$' + delayBenefit.toLocaleString(),
+        body: `Optimizing when ${a.hasSpouse ? 'you and ' + a.spouseName : 'you'} claim Social Security could mean up to <strong class="insight-stat">$${delayBenefit.toLocaleString()}</strong> more in lifetime benefits. This is one of the highest-impact decisions in your plan.`,
+      };
+    }
+    if (concerns.includes('running_out')) {
+      const years = Math.round(a.savings / (a.monthlyExpenses * 12));
+      return {
+        icon: '🛡️',
+        title: 'Your Savings Runway',
+        stat: years + ' years',
+        body: `At your current spending rate, your savings could support roughly <strong class="insight-stat">${years} years</strong> of expenses — before factoring in Social Security${a.hasPension ? ' and your pension' : ''}. Let's make sure that number grows.`,
+      };
+    }
+  }
+
+  if (a.timeline === 'mid' || a.timeline === 'far') {
+    if (concerns.includes('enough')) {
+      const futureValue = Math.round(a.savings * Math.pow(1.07, a.retirementAge - a.age));
+      return {
+        icon: '🚀',
+        title: 'The Power of Time',
+        stat: '$' + futureValue.toLocaleString(),
+        body: `If your current savings grow at a historical average rate, you could have roughly <strong class="insight-stat">$${futureValue.toLocaleString()}</strong> by retirement — and that's before future contributions. Small changes now compound dramatically.`,
+      };
+    }
+  }
+
+  if (concerns.includes('healthcare')) {
+    return {
+      icon: '🏥',
+      title: 'Healthcare in Retirement',
+      stat: '$315,000',
+      body: `The average couple needs about <strong class="insight-stat">$315,000</strong> for healthcare costs in retirement. Your plan can model this precisely — including Medicare timing, supplements, and long-term care.`,
+    };
+  }
+
+  if (concerns.includes('legacy')) {
+    const estateValue = a.savings + a.homeValue;
+    return {
+      icon: '🏡',
+      title: 'Your Estate Today',
+      stat: '$' + estateValue.toLocaleString(),
+      body: `Your current estate — savings plus home equity — is roughly <strong class="insight-stat">$${estateValue.toLocaleString()}</strong>. Building a complete plan helps you see how this grows and ensures your legacy goals are met.`,
+    };
+  }
+
+  // Default: forecast-based insight
+  const yearsToRetirement = Math.max(0, a.retirementAge - a.age);
+  const projectedSavings = Math.round(a.savings * Math.pow(1.06, yearsToRetirement));
+  return {
+    icon: '📊',
+    title: `Here's Where You Stand`,
+    stat: '$' + projectedSavings.toLocaleString(),
+    body: `Based on what we know so far, your projected savings at retirement could reach roughly <strong class="insight-stat">$${projectedSavings.toLocaleString()}</strong>. Adding more details will sharpen this picture significantly.`,
+  };
+}
+
+function generateForecastData(archetype) {
+  const a = ARCHETYPES[archetype];
+  const points = [];
+  const startAge = a.age;
+  const endAge = 95;
+  let savings = a.savings;
+  const annualContrib = a.timeline === 'retired' ? 0 : a.workIncome * 0.12;
+  const annualExpense = a.monthlyExpenses * 12;
+  const ssAnnual = a.ssEstimate * 12;
+  const ssStartAge = a.timeline === 'retired' ? a.age : Math.max(62, a.retirementAge);
+
+  for (let age = startAge; age <= endAge; age++) {
+    points.push({ age, value: Math.max(0, savings) });
+    if (age < a.retirementAge) {
+      // Accumulation
+      savings = savings * 1.06 + annualContrib;
+    } else {
+      // Decumulation
+      const ssIncome = age >= ssStartAge ? ssAnnual : 0;
+      const pension = a.hasPension ? 24000 : 0;
+      const gap = annualExpense - ssIncome - pension;
+      savings = savings * 1.04 - Math.max(0, gap);
+    }
+  }
+  return points;
+}
+
+function renderForecastChart(points, retirementAge) {
+  const w = 620, h = 200, pad = { top: 20, right: 20, bottom: 30, left: 60 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  const maxVal = Math.max(...points.map(p => p.value));
+  const minAge = points[0].age;
+  const maxAge = points[points.length - 1].age;
+
+  const x = (age) => pad.left + ((age - minAge) / (maxAge - minAge)) * plotW;
+  const y = (val) => pad.top + plotH - (val / (maxVal * 1.1)) * plotH;
+
+  // Build path
+  const pathD = points.map((p, i) =>
+    `${i === 0 ? 'M' : 'L'} ${x(p.age).toFixed(1)} ${y(p.value).toFixed(1)}`
+  ).join(' ');
+
+  // Area fill
+  const areaD = pathD + ` L ${x(maxAge).toFixed(1)} ${y(0).toFixed(1)} L ${x(minAge).toFixed(1)} ${y(0).toFixed(1)} Z`;
+
+  // Retirement line
+  const retX = x(retirementAge);
+
+  // Y-axis labels
+  const yLabels = [0, maxVal * 0.5, maxVal].map(v => ({
+    val: v,
+    label: '$' + (v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : Math.round(v / 1000) + 'K'),
+    yPos: y(v),
+  }));
+
+  // X-axis labels
+  const xLabels = [];
+  for (let age = Math.ceil(minAge / 10) * 10; age <= maxAge; age += 10) {
+    xLabels.push({ age, xPos: x(age) });
+  }
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      <!-- Grid lines -->
+      ${yLabels.map(yl => `<line x1="${pad.left}" x2="${w - pad.right}" y1="${yl.yPos}" y2="${yl.yPos}" stroke="#E1E1DC" stroke-width="1" stroke-dasharray="4,4"/>`).join('')}
+
+      <!-- Area fill -->
+      <path d="${areaD}" fill="url(#forecastGrad)" opacity="0.3"/>
+
+      <!-- Line -->
+      <path d="${pathD}" fill="none" stroke="#16875e" stroke-width="2.5"/>
+
+      <!-- Retirement line -->
+      <line x1="${retX}" x2="${retX}" y1="${pad.top}" y2="${pad.top + plotH}" stroke="${'var(--tertiary-400)'}" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <text x="${retX}" y="${pad.top - 6}" text-anchor="middle" fill="#ff8f43" font-size="11" font-weight="600">Retirement</text>
+
+      <!-- Y-axis labels -->
+      ${yLabels.map(yl => `<text x="${pad.left - 8}" y="${yl.yPos + 4}" text-anchor="end" fill="#898980" font-size="11">${yl.label}</text>`).join('')}
+
+      <!-- X-axis labels -->
+      ${xLabels.map(xl => `<text x="${xl.xPos}" y="${h - 6}" text-anchor="middle" fill="#898980" font-size="11">Age ${xl.age}</text>`).join('')}
+
+      <defs>
+        <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#16875e" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#16875e" stop-opacity="0.05"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  `;
+}
+
+function renderInsight() {
+  const a = ARCHETYPES[state.archetype];
+  const insight = generateInsight(state.archetype, state.answers);
+  const forecastPoints = generateForecastData(state.archetype);
+  const chartSvg = renderForecastChart(forecastPoints, a.retirementAge);
+  const gaugeHtml = renderGauge(state.confidence);
+  const todoCount = state.todos.filter(t => t.tier === 'free').length;
+
+  return `
+    <div class="screen insight-screen">
+      <div class="insight-header">
+        <h1>Here's your plan at a glance, ${a.name}</h1>
+        <p>Based on what you've shared so far</p>
+      </div>
+
+      <div class="insight-card">
+        <div class="forecast-chart">
+          ${chartSvg}
+        </div>
+        <div class="forecast-legend">
+          <div class="forecast-legend-item">
+            <div class="forecast-legend-dot" style="background: #16875e"></div>
+            Projected savings
+          </div>
+          <div class="forecast-legend-item">
+            <div class="forecast-legend-dot" style="background: #ff8f43"></div>
+            Retirement age ${a.retirementAge}
+          </div>
+        </div>
+        <div class="forecast-label">This projection improves as you add more details to your plan.</div>
+      </div>
+
+      <div class="insight-callout">
+        <div class="insight-callout-icon">${insight.icon}</div>
+        <div>
+          <h3>${insight.title}</h3>
+          <p>${insight.body}</p>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-bottom">
+          <div class="insight-accuracy">
+            <h3>Plan Accuracy</h3>
+            ${gaugeHtml}
+            <div class="gauge-label" style="font-size:13px">${state.confidence < 50 ? 'Just getting started' : 'Looking good'}</div>
+          </div>
+          <div class="insight-cta">
+            <h3>Make this plan yours</h3>
+            <p>We've identified ${todoCount} items that will improve your plan accuracy the most. Complete them to get projections you can rely on.</p>
+            <button class="btn btn-primary btn-large" id="insightCta">See Your Action Items →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setupInsightListeners() {
+  document.getElementById('insightCta')?.addEventListener('click', () => {
+    setState({ screen: 'todolist' });
+  });
 }
 
 /* ============================================
@@ -1935,8 +2308,8 @@ function renderTodoList() {
   return `
     <div class="screen todo-layout">
       <div class="todo-header">
-        <h1>Your Personalized Plan</h1>
-        <p>We've prioritized what matters most based on your situation</p>
+        <h1>Improve Your Plan Accuracy</h1>
+        <p>Complete these items to sharpen your projections</p>
         <button class="btn btn-primary" id="goToDashboard" style="margin-top:12px">Go to Dashboard →</button>
       </div>
       <div class="todo-grid">
