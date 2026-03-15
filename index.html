@@ -880,6 +880,197 @@ body {
 }
 
 /* ============================================
+   ONBOARDING EXIT SCREEN
+   ============================================ */
+.onboarding-card {
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.onboarding-check {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gauge-high);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 16px rgba(5, 173, 115, 0.3);
+}
+.onboarding-card h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 8px;
+}
+.onboarding-card .subtitle {
+  font-size: 15px;
+  color: var(--neutral-500);
+  margin-bottom: 24px;
+}
+.onboarding-accuracy-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--tertiary-50);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+.onboarding-accuracy-hint .gauge-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--gauge-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gauge-low);
+  flex-shrink: 0;
+}
+.onboarding-accuracy-hint span {
+  font-size: 14px;
+  color: var(--neutral-700);
+  text-align: left;
+}
+.onboarding-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ============================================
+   DASHBOARD SCREEN
+   ============================================ */
+.dashboard-layout {
+  max-width: 960px;
+  width: 100%;
+}
+.dashboard-header {
+  margin-bottom: 24px;
+}
+.dashboard-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 4px;
+}
+.dashboard-header p {
+  font-size: 14px;
+  color: var(--neutral-500);
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}
+
+.dashboard-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.dashboard-card h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--neutral-500);
+  margin-bottom: 16px;
+}
+.dashboard-card .gauge-wrapper {
+  margin: 0 auto 8px;
+}
+.dashboard-accuracy-center {
+  text-align: center;
+}
+
+.dashboard-todo-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--neutral-100);
+  font-size: 14px;
+}
+.dashboard-todo-mini:last-child { border-bottom: none; }
+.dashboard-todo-mini .mini-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dashboard-todo-mini .mini-dot.free { background: var(--secondary-600); }
+.dashboard-todo-mini .mini-dot.plus { background: var(--tertiary-400); }
+.dashboard-todo-mini .mini-title {
+  flex: 1;
+  color: var(--neutral-900);
+}
+.dashboard-todo-mini .mini-time {
+  font-size: 12px;
+  color: var(--neutral-500);
+}
+
+.dashboard-rerun {
+  background: var(--sand);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.dashboard-rerun h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-800);
+  margin-bottom: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.dashboard-rerun p {
+  font-size: 14px;
+  color: var(--neutral-500);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.dashboard-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--neutral-500);
+  font-size: 14px;
+}
+.dashboard-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.dashboard-simulated-label {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--neutral-500);
+  background: var(--neutral-100);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 600px) {
@@ -891,6 +1082,8 @@ body {
   .preview-form { padding: 20px; }
   .preview-footer { padding: 12px 20px; }
   .preview-why-box { margin: 16px 20px; }
+  .onboarding-card h1 { font-size: 22px; }
+  .dashboard-rerun { padding: 20px; }
 }
 </style>
 </head>
@@ -997,7 +1190,7 @@ const ARCHETYPES = {
    APP STATE
    ============================================ */
 let state = {
-  screen: 'triage', // 'triage' | 'todolist' | 'preview'
+  screen: 'onboarding-exit', // 'onboarding-exit' | 'triage' | 'todolist' | 'preview' | 'dashboard'
   archetype: 'nearRetiree',
   triageStep: 0, // 0=confirm, 1-4=questions
   answers: {},
@@ -1005,6 +1198,8 @@ let state = {
   completedTodoIds: new Set(),
   selectedTodoId: null,
   confidence: 15,
+  hasCompletedTriageOnce: false,
+  triageRunCount: 0,
 };
 
 function setState(patch) {
@@ -1028,6 +1223,8 @@ function saveState() {
       completedTodoIds: [...state.completedTodoIds],
       confidence: state.confidence,
       hasTodos: state.todos.length > 0,
+      hasCompletedTriageOnce: state.hasCompletedTriageOnce,
+      triageRunCount: state.triageRunCount,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch(e) { /* ignore */ }
@@ -1041,10 +1238,12 @@ function loadState() {
     state.triageStep = saved.triageStep || 0;
     state.answers = saved.answers || {};
     state.completedTodoIds = new Set(saved.completedTodoIds || []);
-    state.screen = saved.screen || 'triage';
+    state.screen = saved.screen || 'onboarding-exit';
     state.confidence = saved.confidence || 15;
+    state.hasCompletedTriageOnce = saved.hasCompletedTriageOnce || false;
+    state.triageRunCount = saved.triageRunCount || 0;
     // Regenerate todos if we had them
-    if (saved.hasTodos && (saved.screen === 'todolist' || saved.screen === 'preview')) {
+    if (saved.hasTodos && (saved.screen === 'todolist' || saved.screen === 'preview' || saved.screen === 'dashboard')) {
       state.todos = generateTodos(state.archetype, state.answers);
       state.confidence = computeConfidence(state.todos, state.completedTodoIds);
     }
@@ -1458,7 +1657,10 @@ function computeConfidence(todos, completedIds) {
    ============================================ */
 function render() {
   const app = document.getElementById('app');
-  if (state.screen === 'triage') {
+  if (state.screen === 'onboarding-exit') {
+    app.innerHTML = renderOnboardingExit();
+    setupOnboardingExitListeners();
+  } else if (state.screen === 'triage') {
     app.innerHTML = renderTriage();
     setupTriageListeners();
   } else if (state.screen === 'todolist') {
@@ -1473,7 +1675,68 @@ function render() {
   } else if (state.screen === 'preview') {
     app.innerHTML = renderPreview();
     setupPreviewListeners();
+  } else if (state.screen === 'dashboard') {
+    app.innerHTML = renderDashboard();
+    setupDashboardListeners();
   }
+}
+
+/* ============================================
+   RENDER: ONBOARDING EXIT
+   ============================================ */
+function renderOnboardingExit() {
+  const a = ARCHETYPES[state.archetype];
+  const timelineLabel = { retired: 'Retired', near: 'Retiring in ~7 years', mid: 'Retiring in ~23 years', far: 'Retiring in ~31 years' }[a.timeline];
+  const housingLabel = { own_mortgage: 'Homeowner (mortgage)', own_none: 'Homeowner (no mortgage)', rent: 'Renting' }[a.housing];
+  const savingsLabel = a.savings >= 1000000 ? `$${(a.savings/1000000).toFixed(1)}M` : `$${Math.round(a.savings/1000)}K`;
+
+  return `
+    <div class="screen">
+      <div class="triage-card onboarding-card">
+        <div class="onboarding-check">✓</div>
+        <h1>Your plan is ready, ${a.name}!</h1>
+        <p class="subtitle">We've built your retirement plan based on everything you shared.</p>
+
+        <div class="confirm-summary">
+          <h3>Your profile</h3>
+          <div class="confirm-items">
+            <div class="confirm-item"><span class="ci-icon">🎂</span><span class="ci-label">Age</span><span class="ci-value">${a.age}${a.hasSpouse ? ' ('+a.spouseName+': '+a.spouseAge+')' : ''}</span></div>
+            <div class="confirm-item"><span class="ci-icon">📅</span><span class="ci-label">Timeline</span><span class="ci-value">${timelineLabel}</span></div>
+            <div class="confirm-item"><span class="ci-icon">🏠</span><span class="ci-label">Housing</span><span class="ci-value">${housingLabel}</span></div>
+            <div class="confirm-item"><span class="ci-icon">💰</span><span class="ci-label">Saved</span><span class="ci-value">${savingsLabel}</span></div>
+            <div class="confirm-item"><span class="ci-icon">💼</span><span class="ci-label">Income</span><span class="ci-value">${a.workIncome > 0 ? '$'+a.workIncome.toLocaleString()+'/yr' : 'Retired'}</span></div>
+            <div class="confirm-item"><span class="ci-icon">🏥</span><span class="ci-label">SS Est.</span><span class="ci-value">$${a.ssEstimate.toLocaleString()}/mo</span></div>
+          </div>
+        </div>
+
+        <div class="onboarding-accuracy-hint">
+          <div class="gauge-mini">15%</div>
+          <span>Your plan accuracy is <strong>low</strong> — a few quick questions can make your projections much more reliable.</span>
+        </div>
+
+        <div class="onboarding-ctas">
+          <button class="btn btn-primary btn-large" id="startTriage">Let's make your plan more accurate</button>
+          <button class="btn btn-ghost" id="skipToDashboard">Skip to dashboard →</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setupOnboardingExitListeners() {
+  document.getElementById('startTriage')?.addEventListener('click', () => {
+    setState({ screen: 'triage' });
+  });
+  document.getElementById('skipToDashboard')?.addEventListener('click', () => {
+    // Generate default todos with empty answers
+    const todos = generateTodos(state.archetype, {});
+    setState({
+      screen: 'dashboard',
+      todos,
+      answers: {},
+      confidence: computeConfidence(todos, state.completedTodoIds),
+    });
+  });
 }
 
 /* ============================================
@@ -1555,7 +1818,7 @@ function renderTriage() {
       <div class="triage-card">
         <div class="question-container">${stepsHtml}</div>
         <div class="triage-nav">
-          <button class="btn btn-ghost" id="triageBack" ${state.triageStep === 0 ? 'style="visibility:hidden"' : ''}>← Back</button>
+          <button class="btn btn-ghost" id="triageBack" ${state.triageStep === 0 && state.hasCompletedTriageOnce ? 'style="visibility:hidden"' : ''}>← Back</button>
           <button class="btn btn-primary ${isLastStep && canContinue ? 'btn-secondary' : ''}" id="triageNext" ${!canContinue && state.triageStep > 0 ? 'disabled' : ''}>
             ${state.triageStep === 0 ? 'Looks right — continue' : isLastStep ? 'Show my plan →' : 'Continue'}
           </button>
@@ -1600,7 +1863,11 @@ function setupTriageListeners() {
 
   document.getElementById('triageNext')?.addEventListener('click', advanceTriage);
   document.getElementById('triageBack')?.addEventListener('click', () => {
-    if (state.triageStep > 0) setState({ triageStep: state.triageStep - 1 });
+    if (state.triageStep > 0) {
+      setState({ triageStep: state.triageStep - 1 });
+    } else if (!state.hasCompletedTriageOnce) {
+      setState({ screen: 'onboarding-exit' });
+    }
   });
 }
 
@@ -1611,7 +1878,13 @@ function advanceTriage() {
   } else {
     // Generate todos and go to list
     const todos = generateTodos(state.archetype, state.answers);
-    setState({ screen: 'todolist', todos, confidence: computeConfidence(todos, state.completedTodoIds) });
+    setState({
+      screen: 'todolist',
+      todos,
+      confidence: computeConfidence(todos, state.completedTodoIds),
+      hasCompletedTriageOnce: true,
+      triageRunCount: (state.triageRunCount || 0) + 1,
+    });
   }
 }
 
@@ -1664,6 +1937,7 @@ function renderTodoList() {
       <div class="todo-header">
         <h1>Your Personalized Plan</h1>
         <p>We've prioritized what matters most based on your situation</p>
+        <button class="btn btn-primary" id="goToDashboard" style="margin-top:12px">Go to Dashboard →</button>
       </div>
       <div class="todo-grid">
         <div class="todo-main">
@@ -1749,6 +2023,9 @@ function setupTodoListeners() {
       const id = el.dataset.id;
       setState({ screen: 'preview', selectedTodoId: id });
     });
+  });
+  document.getElementById('goToDashboard')?.addEventListener('click', () => {
+    setState({ screen: 'dashboard' });
   });
 }
 
@@ -2092,12 +2369,103 @@ function setupPreviewListeners() {
 }
 
 /* ============================================
+   RENDER: DASHBOARD
+   ============================================ */
+function renderDashboard() {
+  const a = ARCHETYPES[state.archetype];
+  const gaugeHtml = renderGauge(state.confidence);
+  const completedCount = state.todos.filter(t => state.completedTodoIds.has(t.id)).length;
+  const totalCount = state.todos.length;
+  const incompleteTodos = state.todos.filter(t => !state.completedTodoIds.has(t.id)).slice(0, 3);
+  const hasTodos = state.todos.length > 0;
+
+  // Accuracy messaging
+  let accLabel;
+  if (state.confidence <= 49) accLabel = 'Some of your plan inputs are missing or outdated.';
+  else if (state.confidence <= 84) accLabel = 'Some details could use a quick check.';
+  else accLabel = 'Your plan looks great!';
+
+  const coachContent = hasTodos ? `
+    ${incompleteTodos.map(t => `
+      <div class="dashboard-todo-mini">
+        <div class="mini-dot ${t.tier}"></div>
+        <span class="mini-title">${t.title}</span>
+        ${t.tier === 'plus' ? '<span class="pplus-badge pplus-badge-sm">P+</span>' : `<span class="mini-time">~${t.minutes} min</span>`}
+      </div>
+    `).join('')}
+    ${incompleteTodos.length < (totalCount - completedCount) ? `<div style="text-align:center;padding-top:8px;font-size:13px;color:var(--neutral-500)">+${totalCount - completedCount - incompleteTodos.length} more items</div>` : ''}
+    <button class="btn btn-primary" id="viewAllTasks" style="width:100%;margin-top:16px">Review your plan tasks</button>
+  ` : `
+    <div class="dashboard-empty">
+      <div class="dashboard-empty-icon">📋</div>
+      <p>Complete triage to get personalized recommendations for improving your plan.</p>
+      <button class="btn btn-primary" id="runTriageFromEmpty" style="margin-top:12px">Get started</button>
+    </div>
+  `;
+
+  return `
+    <div class="screen dashboard-layout">
+      <div class="dashboard-header">
+        <span class="dashboard-simulated-label">Simulated Dashboard</span>
+        <h1>Welcome back, ${a.name}</h1>
+        <p>Here's how your plan is looking${state.triageRunCount > 1 ? ` · Triage updated ${state.triageRunCount} times` : ''}</p>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Plan Accuracy Widget -->
+        <div class="dashboard-card">
+          <h3>Plan Accuracy</h3>
+          <div class="dashboard-accuracy-center">
+            ${gaugeHtml}
+            <div class="gauge-label" style="font-size:13px;margin-bottom:4px">${accLabel}</div>
+            <div style="font-size:14px;font-weight:600;color:var(--neutral-900);margin-top:8px">${completedCount} / ${totalCount} items completed</div>
+          </div>
+        </div>
+
+        <!-- Coach Preview -->
+        <div class="dashboard-card">
+          <h3>Your Next Steps</h3>
+          ${coachContent}
+        </div>
+
+        <!-- Re-run Triage CTA -->
+        <div class="dashboard-rerun" style="grid-column: 1 / -1;">
+          <h3>Life changed?</h3>
+          <p>Marriage, job change, new home, or just a few years older — your priorities may have shifted.</p>
+          <button class="btn btn-secondary" id="rerunTriage">Update my priorities</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setupDashboardListeners() {
+  document.getElementById('viewAllTasks')?.addEventListener('click', () => {
+    setState({ screen: 'todolist' });
+  });
+  document.getElementById('rerunTriage')?.addEventListener('click', rerunTriage);
+  document.getElementById('runTriageFromEmpty')?.addEventListener('click', () => {
+    setState({ screen: 'triage', triageStep: 0 });
+  });
+}
+
+function rerunTriage() {
+  // Keep completedTodoIds but reset answers and triage step
+  setState({
+    screen: 'triage',
+    triageStep: 0,
+    answers: {},
+    // completedTodoIds preserved
+  });
+}
+
+/* ============================================
    DEMO CONTROLS
    ============================================ */
 function switchArchetype(val) {
   clearSaved();
   state = {
-    screen: 'triage',
+    screen: 'onboarding-exit',
     archetype: val,
     triageStep: 0,
     answers: {},
@@ -2105,6 +2473,8 @@ function switchArchetype(val) {
     completedTodoIds: new Set(),
     selectedTodoId: null,
     confidence: 15,
+    hasCompletedTriageOnce: false,
+    triageRunCount: 0,
   };
   render();
 }
